@@ -1,0 +1,114 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   08/18/2018
+#   @package        :   
+#   @description    :   
+#   @url            :   
+###############################################################################
+homeassistant:
+  customize:
+    sensor.ups_status:
+      icon: mdi:information-outline
+    sensor.ups_battery_runtime_mins:
+      icon: mdi:clock-outline
+    sensor.ups_battery_runtime:
+      hidden: true
+    sensor.ups_status_data:
+      hidden: true
+      
+group:
+  ups:
+      name: "UPS"
+      control: hidden
+      entities:
+      - sensor.ups_battery_charge
+      - sensor.ups_battery_runtime_mins
+      - sensor.ups_battery_voltage
+      - sensor.ups_input_voltage
+      - sensor.ups_load
+      - sensor.ups_nominal_real_power
+      - sensor.ups_status
+
+sensor:
+# UPS sensor    
+  - platform: nut
+    host: !secret ups_ip_address
+    name: UPS
+    resources:
+      - input.voltage
+      - battery.voltage
+      - ups.load
+      - ups.status
+      - battery.runtime
+      - battery.charge
+      - ups.realpower.nominal
+  - platform: template
+    sensors:
+      ups_status:
+        friendly_name: 'UPS Status'
+        value_template: >-
+          {% if is_state('sensor.ups_status_data', 'OL CHRG') %}
+            On Line Charging
+          {% elif is_state('sensor.ups_status_data', 'OB DISCHRG') %}
+            On Battery
+          {% elif 'LB' in states.sensor.ups_status_data.state %}
+             Low battery
+          {% elif 'OL' in states.sensor.ups_status_data.state %}
+             On Line
+          {% elif 'SD' in states.sensor.ups_status_data.state %}
+            Shutdown load
+          {% elif 'CP' in states.sensor.ups_status_data.state %}
+            Cable power
+          {% elif 'CTS' in states.sensor.ups_status_data.state %}
+            Clear to Send
+          {% elif 'RTS' in states.sensor.ups_status_data.state %}
+            Ready to Send
+          {% elif 'DCD' in states.sensor.ups_status_data.state %}
+            Data Carrier Detect
+          {% elif 'RNG' in states.sensor.ups_status_data.state %}
+            Ring indicate
+          {% elif 'DTR' in states.sensor.ups_status_data.state %}
+            Data Terminal Ready
+          {% elif 'ST' in states.sensor.ups_status_data.state %}
+            Send Break
+          {% endif %}
+      ups_battery_runtime_mins:
+        friendly_name: 'UPS Battery Runtime'
+        unit_of_measurement: 'minutes'
+        value_template: "{{ states('sensor.ups_battery_runtime')|float / 60 |round(2)}}"
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  # Notify Josh if power goes out
+  - alias: Power has gone out
+    trigger:
+      - platform: state
+        entity_id: sensor.ups_status
+        to: 'On Battery'
+    action:
+      service: notify.josh_phone
+      data:
+        message: "Power went out at: {{ now().strftime('%H:%M') }}"  
+
+  # Notify Josh when power comes back
+  - alias: Power has returned
+    trigger:
+      - platform: state
+        entity_id: sensor.ups_status
+        from: 'On Battery'
+        to: 'On Line Charging'
+      - platform: state
+        entity_id: sensor.ups_status
+        from: 'On Battery'
+        to: 'On Line'  
+      - platform: state
+        entity_id: sensor.ups_status
+        from: 'Low Battery'
+        to: 'On Line Charging'    
+    action:
+      service: notify.josh_phone
+      data:
+        message: "Power returned at: {{ now().strftime('%H:%M') }}"   
+

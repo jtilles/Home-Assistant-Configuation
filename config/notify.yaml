@@ -1,0 +1,4 @@
+  - name: Josh Phone
+    platform: pushbullet
+    api_key: !secret pushbullet_api_key
+    

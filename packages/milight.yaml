@@ -1,0 +1,89 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   08/18/2018
+#   @package        :   
+#   @description    :   
+#   @url            :   
+###############################################################################
+homeassistant:
+  # customize:
+
+# group:
+
+light:
+  - platform: mqtt_json
+    command_topic: "milight/commands/0x6013/rgbw/1"
+    state_topic: "milight/updates/0x6013/rgbw/1"
+    name: "Bedroom Lamp"
+    brightness: true
+    rgb: true
+    qos: 1
+    white_value: true
+
+  # - platform: mqtt_json
+    # command_topic: "milight/0x6012/rgbw/2"
+    # state_topic: "milight-update/0x6012/rgbw/2"
+    # name: "Cornice-old"
+    # brightness: true
+    # rgb: true
+    # qos: 1
+    # white_value: true
+
+  - platform: mqtt_json
+    command_topic: "milight/commands/0x6013/rgbw/3"
+    state_topic: "milight/updates/0x6013/rgbw/3"
+    name: "Underbed LEDs"
+    brightness: true
+    rgb: true
+    #qos: 1
+    retain: true
+    white_value: true
+ 
+  - platform: mqtt_json
+    command_topic: "milight/commands/0x6013/rgbw/4"
+    state_topic: "milight/updates/0x6013/rgbw/4"
+    name: "Headboard"
+    brightness: true
+    rgb: true
+    #qos: 1
+    retain: true
+    white_value: true
+    
+  - platform: group
+    name: Bedroom Lights
+    entities:
+      - light.bedroom_lamp
+      - light.cornice
+      - light.headboard
+      - light.underbed_leds
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  # Forward commands from MiLight Remote (different topics for remote vs bulb)
+  - alias: MiLight Remote Forwarder
+    initial_state: True
+    trigger:
+    - platform: mqtt
+      topic: milight/updates/0x6012/rgbw/+
+    action:
+    - service: mqtt.publish
+      data_template:
+        topic: "milight/commands/0x6013/rgbw/{{ trigger.topic.split('/')[4] }}"
+        payload_template: >
+          {{ trigger.payload }}   
+  
+  # # Forwards all commands to Bedroom Light Group
+  # - alias: MiLight Remote Forwarder (all)
+    # initial_state: True
+    # trigger:
+    # - platform: mqtt
+      # topic: milight/updates/0x6012/rgbw/0
+    # action:
+    # - service: 
+      # data_template:
+        # topic: "milight/commands/0x6013/rgbw/{{ trigger.topic.split('/')[4] }}"
+        # payload_template: >
+          # {{ trigger.payload }}   
+          

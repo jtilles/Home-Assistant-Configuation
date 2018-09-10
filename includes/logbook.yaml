@@ -1,0 +1,25 @@
+############################################################
+#
+# Home Assistant Log Book
+#
+############################################################
+
+include:
+  entities:
+    - sensor.speedtest_ping
+    - sensor.speedtest_download
+    - sensor.speedtest_upload
+    - binary_sensor.garage_door
+    - cover.garage_door_opener
+    - device_tracker.joshua_josh_6p
+    - device_tracker.sam_iphone
+    - light.cornice
+    - sensor.front_door
+    - sensor.living_room_luminance
+    - sensor.living_room_motion
+    - sensor.ups_input_voltage
+    - sensor.ups_status
+  
+  
+  domains:
+    - sun

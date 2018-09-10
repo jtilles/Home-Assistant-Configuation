@@ -1,0 +1,176 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   08/18/2018
+#   @package        :   
+#   @description    :   Electric Curtains/ Cornice in the Master Bedroom controller loaded w/ TASMOTA
+#                       use 2 spare GPIOS to simulate pressing buttons on the curtains
+#                         Electric Curtains:  https://www.ebay.com/itm/16-Remote-Electric-Motorized-Window-Treatment-Drapery-Curtain-Rod-Kit/260353420577?epid=1428488065&hash=item3c9e45ed21:g:SLUAAOSwyTZUVnDX            
+#                         Controller:  https://www.aliexpress.com/item/16Million-colors-Wifi-5channels-RGBW-WW-CW-led-controller-smartphone-control-music-and-timer-mode-magic/32796615335.html?spm=a2g0s.9042311.0.0.7e454c4dwJRyhb
+#   @url            :   
+###############################################################################
+homeassistant:
+  customize:
+    switch.curtain_close:
+      hidden: true
+      google_assistant: false
+    
+    switch.curtain_open:
+      hidden: true
+      google_assistant: false
+    
+    switch.curtain_stop:
+      hidden: true
+      google_assistant: false
+    
+    switch.roller_shades_open:
+      hidden: true
+      google_assistant: false
+      
+    switch.roller_shades_close:
+      hidden: true
+      google_assistant: false
+      
+    switch.roller_shades_stop:
+      hidden: true
+      google_assistant: false
+
+group:
+
+switch:
+    # MQTT Switches for curtains
+  - platform: mqtt
+    name: Curtain Open
+    command_topic: "cmnd/sonoff-RGBCW/Power3"
+    availability_topic: "tele/sonoff-RGBCW/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+    
+  - platform: mqtt
+    name: Curtain Stop
+    command_topic: "cmnd/sonoff-RGBCW/Power5"
+    availability_topic: "tele/sonoff-RGBCW/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+    
+  - platform: mqtt
+    name: Curtain Close
+    command_topic: "cmnd/sonoff-RGBCW/Power2"
+    availability_topic: "tele/sonoff-RGBCW/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+    
+
+light:
+    # RGBW-CW/WW Controller for Cornice
+  - platform: mqtt
+    name: "Cornice"
+    availability_topic: "tele/sonoff-RGBCW/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    command_topic: "cmnd/sonoff-RGBCW/Power6"
+    brightness_command_topic: "cmnd/sonoff-RGBCW/Dimmer"
+    brightness_state_topic: "stat/sonoff-RGBCW/RESULT"
+    brightness_scale: 100
+    brightness_value_template: "{{ value_json.Dimmer }}"
+    color_temp_command_topic: "cmnd/sonoff-RGBCW/CT"
+    color_temp_state_topic: "stat/sonoff-RGBCW/RESULT"
+    color_temp_value_template: "{{ value_json.CT }}"
+    on_command_type: "last"
+    payload_on: "ON"
+    payload_off: "OFF"
+    rgb_command_topic: "cmnd/sonoff-RGBCW/Color"
+    rgb_command_template: "{{ '%02x%02x%02x' | format(red, green, blue)}}"
+    rgb_state_topic: "stat/sonoff-RGBCW/RESULT"
+    rgb_value_template: "{{(value_json.Channel[0]*2.55)|int}},{{(value_json.Channel[1]*2.55)|int}},{{(value_json.Channel[2]*2.55)|int}}"
+    effect_state_topic: "stat/sonoff-RGBCW/RESULT"
+    effect_command_topic: "cmnd/sonoff-RGBCW/Scheme"
+    effect_list:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+    state_topic: "stat/sonoff-RGBCW/POWER6"
+    #state_value_template: "{{ value_json.POWER }}"
+    #retain: true
+    qos: 1
+
+cover:
+# Master Bedroom Blackout Shades   
+  - platform: template
+    covers:
+      bedroom_shades:
+        friendly_name: Bedroom Shades
+        open_cover:
+          service: switch.turn_on
+          data:
+            entity_id: switch.roller_shades_open
+        close_cover:
+          service: switch.turn_on
+          data:
+            entity_id: switch.roller_shades_close
+        stop_cover:
+          service: switch.turn_on
+          data:
+            entity_id: switch.roller_shades_stop
+# Master Bedroom Blackout Curtains
+      bedroom_curtains:
+        friendly_name: Bedroom Curtains
+        open_cover:
+          service: switch.turn_on
+          data:
+            entity_id: switch.curtain_open
+        close_cover:
+          service: switch.turn_on
+          data:
+            entity_id: switch.curtain_close    
+        stop_cover:
+          service: switch.turn_on
+          data:
+            entity_id: switch.curtain_stop
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  - alias: MiLight Remote Cornice Forwarder
+    initial_state: True
+    trigger:
+    - platform: mqtt
+      topic: milight/states/0x6012/rgbw/2
+    action:
+      service_template: >
+        {% if trigger.payload_json.state == 'ON'%}
+          light.turn_on
+        {% else %}
+          light.turn_off
+        {% endif %}
+      data:
+        entity_id: light.cornice
+        
+      # light.turn_{{ 'on' if trigger.payload_json.state == 'ON' else 'off' }}
+      # data_template:
+        # entity_id: light.cornice
+        # rgb_color: >- 
+          # [{{ trigger.payload_json.color.r }},{{ trigger.payload_json.color.g }},{{ trigger.payload_json.color.b }}]
+        
+        
+        # data: 
+            # entity_id: light.cornice 
+            # rgb_color_template: '[{{ trigger.payload_json.color.r|int,trigger.payload_json.color.g|int,trigger.payload_json.color.b|int }}]' #}
+        
+        # - '{{ trigger.payload_json.color.r }}'
+        # - '{{ trigger.payload_json.color.g }}'
+        # - '{{ trigger.payload_json.color.b }}'
+        # topic: "milight/commands/0x6013/rgbw/{{ trigger.topic.split('/')[4] }}"
+        # payload_template: >
+          # {{ trigger.payload }}
+
+          
+         # trigger.payload_json.state

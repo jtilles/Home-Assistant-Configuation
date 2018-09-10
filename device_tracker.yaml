@@ -1,0 +1,31 @@
+
+# - platform: ddwrt
+  # host: 192.168.0.1
+  # username: 
+  # password: 
+  # interval_seconds: 10
+  # consider_home: 180
+  # new_device_defaults:
+    # track_new_devices: False
+- platform: netgear
+  host: !secret router_ip_address
+  username: !secret router_username
+  password: !secret router_password
+  #interval_seconds: 10
+  consider_home: 120
+  new_device_defaults:
+    track_new_devices: True
+    hide_if_away: False
+    
+
+# - platform: owntracks
+  # max_gps_accuracy: 200
+  # # waypoints: True
+  # mqtt_topic: "owntracks/#"
+  # # events_only: True
+  # # waypoint_whitelist:
+    # # - jon
+    # # - ram
+  # # region_mapping:
+    # # cabin: home
+    # # office: work

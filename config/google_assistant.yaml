@@ -1,0 +1,9 @@
+google_assistant:
+  project_id: personalhomeassistant-f6eae
+  client_id: 760263449660-ar66q6s4pid8229kkn1negv7s5a7jcrr.apps.googleusercontent.com
+  access_token: bGZka2phZHNsa3F3ZXJ0eXVpb25idmNkc2ZnaGpraXV5dHJld3FhU0RGQ1ZCTk0sLkxLSlVIWVRSRkdISmttbmJ2Y2RmZ2prbGhpZnR5eWZrang=
+  agent_user_id: joshua.t.illes@gmail.com
+  api_key: 
+  exposed_domains:
+    - switch
+    - light

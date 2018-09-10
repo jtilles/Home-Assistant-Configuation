@@ -1,0 +1,12 @@
+turn_on_bedroom_fan:
+  alias: Turn on bedroom ceiling fan
+  sequence:  
+    - service: switch.turn_on
+      data:
+        entity_id: switch.bedroom_ceiling_fan_4
+    - delay: 
+        seconds: 2
+    - service: switch.turn_on
+      data:
+        entity_id: switch.bedroom_fan_high  
+        

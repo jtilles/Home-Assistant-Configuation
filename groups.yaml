@@ -1,0 +1,288 @@
+
+
+#### VIEWS
+  downstairs_view:
+    view: yes
+    name: Downstairs
+    entities:
+      - group.living_room
+      - group.office
+      - group.kitchen
+      - group.HVAC
+      - group.garage
+      - switch.outside_bug_zapper
+      - media_player.kitchen_home
+      - media_player.yamaha_receiver
+      - media_player.yamaha_receiver_zone_2
+      - light.office_light
+      - group.christmas_lights
+      - cover.garage_door_opener
+  upstairs_view:
+    view: yes
+    name: upstairs
+    entities:
+      - group.master_bedroom
+      - group.bedroom_lights
+  
+  people_view:
+    view: yes
+    name: people
+    icon: mdi:account-circle
+    entities:
+      - group.josh
+      - group.sam
+  
+  information_view:
+    view: yes
+    name: information
+    icon: mdi:wrench
+    entities:
+      - group.homeAssistantServer
+      - group.network
+      - group.sabnzbd
+      - group.synology_server
+      - group.ups
+      - group.battery_levels
+      - group.device_status
+  
+  
+#### GROUPS  
+
+  kitchen:
+    name: Kitchen
+    #icon: mdi:food
+    control: hidden
+    entities:
+      - switch.porch_switch
+      - sensor.front_door
+      - light.kitchen_cabinets
+      - light.kitchen_switch
+  
+  living_room:
+    name: Living Room
+    control: hidden
+    entities:
+      - switch.living_room_lamp
+      - light.living_room_fan_light
+      - fan.living_room_fan
+      - switch.fireplace
+      - sensor.fireplace_temperature
+      - sensor.living_room_motion
+      - sensor.living_room_multisensor_luminance
+      - sensor.living_room_multisensor_relative_humidity
+      - sensor.living_room_multisensor_temperature
+      - switch.eufy_robovac
+      - media_player.living_room
+  
+  staircase:
+    name: Staircase
+    control: hidden
+    entities:
+      - sensor.staircase_motion
+      - sensor.staircase_multisensor_temperature
+      - sensor.staircase_multisensor_relative_humidity
+      - sensor.staircase_multisensor_luminance
+  
+  garage:
+    name: Garage
+    entities:
+      - cover.garage_door_opener
+      - binary_sensor.garage_door
+  
+  bedroom_lights:
+    name: Bedroom Lights
+    entities:
+      - light.bedroom_lamp
+      - light.cornice
+      - light.headboard
+      - light.underbed_leds
+      
+  master_bedroom:
+    name: Bedroom
+    control: hidden
+    entities:
+      - switch.heated_blanket
+      - switch.air_purifier
+      - group.bedroom_lights
+      - switch.bedroom_ceiling_fan_4
+      - cover.bedroom_curtains
+      - cover.bedroom_shades
+      - sensor.master_bedroom_temperature
+      - sensor.master_bedroom_humidity
+      - sensor.master_bedroom_luminance
+      - sensor.master_bedroom_motion
+  
+  christmas_lights:
+    name: Christmas Lights
+    control: hidden
+    entities:
+      - switch.outside_christmas_lights
+      - switch.garland
+      - switch.christmas_tree
+  
+  office:
+    name: Office
+    control: hidden
+    entities:
+      - switch.office_lamp
+      - sensor.office_motion
+      - switch.office_closet
+  
+  weather:
+    name: Weather
+    entities:
+      - sun.sun
+      - sensor.moon
+      - sensor.weather_cloudiness
+      - sensor.weather_dewpoint_temperature
+      - sensor.weather_fog
+      - sensor.weather_high_clouds
+      - sensor.weather_humidity
+      - sensor.weather_low_clouds
+      - sensor.weather_medium_clouds
+      - sensor.weather_precipitation
+      - sensor.weather_pressure
+      - sensor.weather_symbol
+      - sensor.weather_temperature
+      - sensor.weather_wind_direction
+      - sensor.weather_wind_speed
+      - sensor.yw_day1_condition
+      - sensor.yw_day1_temperature_max
+      - sensor.yw_day1_temperature_min
+      - sensor.yw_day2_condition
+      - sensor.yw_day2_temperature_max
+      - sensor.yw_day2_temperature_min
+      - sensor.yw_day3_condition
+      - sensor.yw_day3_temperature_max
+      - sensor.yw_day3_temperature_min
+      
+  homeAssistantServer:
+    name: Home Assistant Server
+    entities:
+    - sensor.ipv4_address_eth0
+    - sensor.memory_free
+    - sensor.memory_use
+    - sensor.disk_use_percent_home
+    - sensor.since_last_boot
+    - sensor.time_online
+    - sensor.ssl_certificate_expiry
+    
+     # - type: disk_use_percent
+      # arg: /home
+    # - type: memory_use
+    # - type: memory_free
+    # - type: ipv4_address
+      # arg: eth0
+    # - type: since_last_boot
+    
+  HVAC:
+    name: HVAC
+    entities:
+    - climate.hallway
+    - sensor.hallway_thermostat_temperature
+    - sensor.hallway_thermostat_humidity
+    - sensor.hallway_thermostat_hvac_state
+    - sensor.hallway_thermostat_operation_mode
+    - sensor.hallway_thermostat_target
+    - binary_sensor.hallway_thermostat_fan
+    - binary_sensor.hallway_thermostat_online
+    - binary_sensor.main_squeeze_away
+    - sensor.main_squeeze_eta
+    - sensor.main_squeeze_security_state
+     
+    
+  network:
+    name: Network
+    entities:
+    - sensor.connected_devices
+    - sensor.speedtest_ping
+    - sensor.speedtest_download
+    - sensor.speedtest_upload
+    - sensor.joshillescom
+    - sensor.myipopendnscom
+    
+  sabnzbd:
+    name: Sabnzbd
+    entities: 
+    - sensor.media_downloader_disk
+    - sensor.media_downloader_disk_free
+    - sensor.media_downloader_left
+    - sensor.media_downloader_queue
+    - sensor.media_downloader_speed
+    - sensor.media_downloader_status
+    
+  
+  synology:
+    name: Synology Server
+    entities:
+    - sensor.network_down
+    - sensor.network_up
+    - sensor.cpu_load_total
+    - sensor.status_volume_1
+    - sensor.total_size_volume_1
+    - sensor.used_space_volume_1
+    - sensor.volume_used_volume_1
+    - sensor.temperature_sda
+    - sensor.temperature_sdb
+    - sensor.temperature_sdc
+    
+  battery_levels:
+    name: Battery Levels
+    entities:
+    - sensor.living_room_motion_battery
+    - sensor.front_door_battery
+    - sensor.office_motion_battery
+    - sensor.master_bedroom_motion_battery
+    - sensor.staircase_multisensor_battery
+
+  josh:
+    name: Josh
+    entities:
+    - sensor.josh_phone_battery
+    - device_tracker.joshua_josh_6p
+    - device_tracker.joshs_tablet
+    
+  sam:
+    name: Samantha
+    entities:
+    - device_tracker.sam_iphone
+    - device_tracker.sams_ipad
+    
+  device_status:
+    name: Networked Devices
+    entities:
+    - device_tracker.air_purifier
+    - device_tracker.bedroom_echo
+    - device_tracker.bedroom_gh
+    - device_tracker.broadlink_rmpro
+    - device_tracker.christmas_tree
+    - device_tracker.chromecastultra
+    - device_tracker.cornice
+    - device_tracker.driveway_camera
+    - device_tracker.garage_door_opener
+    - device_tracker.hassio
+    - device_tracker.hd_homerun
+    - device_tracker.illesds
+    - device_tracker.josh_phone
+    - device_tracker.josh_printer
+    - device_tracker.joshpc
+    - device_tracker.kevo_bridge
+    - device_tracker.kitchen_cabinets
+    - device_tracker.kitchengooglehome
+    - device_tracker.living_room_echo_dot
+    - device_tracker.living_room_fan
+    - device_tracker.living_room_lamp
+    - device_tracker.living_room_tv
+    - device_tracker.master_bedroom_fan
+    - device_tracker.milight_gateway
+    - device_tracker.mysensors_gateway
+    - device_tracker.nest
+    - device_tracker.office_closet
+    - device_tracker.office_echo_dot
+    - device_tracker.office_lamp
+    - device_tracker.porch_camera
+    - device_tracker.samanthasipad
+    - device_tracker.sams_phone
+    - device_tracker.shield_tv
+    - device_tracker.wnr2000v5
+    - device_tracker.yamaha_reciever

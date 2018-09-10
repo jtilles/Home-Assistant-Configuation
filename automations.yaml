@@ -1,0 +1,443 @@
+# Prep the bedroom for sleep
+- alias: Bedroom Nightime
+  trigger:
+  - at: '21:45:00'
+    platform: time
+    
+  action:
+  - service: switch.turn_on
+    data:
+      entity_id: 
+      - switch.air_purifier
+  - service: light.turn_on
+    alias: Headboard LEDs
+    data:
+      brightness: '50'
+      entity_id: light.headboard
+      rgb_color:
+      - 163
+      - 27
+      - 205
+  - service: light.turn_on
+    alias: Underbed LEDs
+    data:
+      brightness: '122'
+      entity_id: light.underbed_leds
+      rgb_color:
+      - 205
+      - 27
+      - 86  
+  - service: light.turn_on
+    alias: Cornice
+    data:
+      brightness: '200'
+      entity_id: light.cornice
+      rgb_color:
+      - 0
+      - 153
+      - 0  
+  - service: switch.turn_off
+    alias: Turn Off Lamp
+    data:
+      entity_id:
+      - switch.living_room_lamp
+      - switch.fireplace
+  - service: cover.close_cover
+    data:
+      entity_id:
+      - cover.bedroom_curtains
+      - cover.bedroom_shades
+  - service: script.turn_on_bedroom_fan
+  
+  
+# Turn off Air Purifier in the morning
+- alias: Bedroom Morning
+  trigger:
+  - platform: time
+    at: '7:00:00'
+  
+  action:
+  - service: switch.turn_off
+    data:
+      entity_id: switch.air_purifier
+  - service: switch.turn_on
+    data:
+      entity_id:
+        switch.bedroom_fan_off
+  
+# Turn on electric blanket at 9:30pm when it is less than 55°F outside
+- alias: Turn on Electric Blanket
+  trigger:
+  - platform: time
+    at: '21:30:00'
+  condition:
+    condition: template
+    value_template: '{{ states.weather.dark_sky.attributes.temperature < 55 }}'
+  action:
+  - service: switch.turn_on
+    data:
+      entity_id: switch.heated_blanket
+      
+# Turn off electric blanket at 10:15
+- alias: Turn off Electric Blanket
+  trigger:
+  - platform: time
+    at: '22:15:00'
+  condition:
+    condition: state
+    entity_id: switch.heated_blanket
+    state: 'on'
+  action:
+  - service: switch.turn_off
+    data:
+      entity_id: switch.heated_blanket
+
+# Turn on living room lamp 20 minutes before sunset   
+- alias: Lamp at Sunset
+  trigger:
+  - event: sunset
+    offset: -00:20:00
+    platform: sun
+  action:
+  - service: switch.turn_on
+    data:
+      entity_id: switch.living_room_lamp
+  - service: light.turn_on
+    data:
+      entity_id: light.kitchen_cabinets
+   
+    
+# Turn off living_room_lamp and porch_switch at 10pm
+- alias: Turn off Lamp
+  trigger:
+  - at: '22:00:00'
+    platform: time
+  action:
+  - service: switch.turn_off
+    data:
+      entity_id:
+      - switch.living_room_lamp
+      - switch.porch_switch
+  - service: light.turn_off
+    data:
+      entity_id:
+      - light.kitchen_cabinets
+  
+
+# On travel turn on    
+- alias: AWAY
+  trigger:
+    platform: state
+    entity_id: input_boolean.away
+    to: 'on'
+  action:
+  - service: automation.turn_off
+    data:
+      entity_id:
+      - automation.bedroom_morning
+      - automation.bedroom_nightime
+      - automation.turn_on_blanket
+      - automation.turn_on_porch_light_at_dusk
+  - service: climate.set_away_mode
+    data:
+      entity_id: climate.hallway
+      away_mode: 'on'
+  
+
+# On travel turn off    
+- alias: HOME
+  trigger:
+    platform: state
+    entity_id: input_boolean.away
+    to: 'off'
+  action:
+  - service: automation.turn_on
+    data:
+      entity_id:
+      - automation.bedroom_morning
+      - automation.bedroom_nightime
+      - automation.turn_on_blanket
+      - automation.turn_on_porch_light_at_dusk
+    
+ 
+
+
+
+#  Turn on office light with motion when dark
+#     20 min before sunset or 20 min after sunset   
+- alias: Turn on Office Light w/ Motion
+  trigger:
+    - platform: state
+      entity_id: sensor.office_motion
+      to: Motion
+  condition:
+    condition: or
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-00:20:00"
+      - condition: sun
+        before: sunrise
+        before_offset: "00:20:00"
+  action:
+    service: switch.turn_on
+    entity_id: switch.office_lamp
+    
+    
+# Turn off office lights 15 minutes after motion stops
+- alias: Turn off Office Light w/o Motion
+  trigger:
+    platform: state
+    entity_id: sensor.office_motion
+    to: 'No Motion'
+    for:
+      minutes: 15
+  action:
+    service: switch.turn_off
+    entity_id: 
+    - switch.office_lamp
+    - switch.office_closet
+
+# Turn off office closet after 30 minutes of being left on    
+- alias: Turn off Office Closet
+  trigger:
+    platform: state
+    entity_id: switch.office_closet
+    from: 'off'
+    to: 'on'
+    for:
+      minutes: 30
+  action:
+    service: switch.turn_off
+    entity_id: switch.office_closet
+
+ # Turn on porch switch at dusk (15 minutes before sunset)
+- alias: Turn on porch light at dusk
+  trigger:
+    - platform: sun
+      event: sunset
+      offset: "-00:15:00"
+  action:
+    service: switch.turn_on
+    entity_id: switch.porch_switch
+    
+    
+ # Turn on porch switch at 9pm
+- alias: Turn off porch light at 9PM
+  trigger:
+    - platform: time
+      at: '21:00:00'
+  action:
+    service: switch.turn_off
+    entity_id: switch.porch_switch
+    
+    
+# Turn on porch switch at sunrise if left on
+- alias: Turn off porch light at sunrise
+  trigger:
+    - platform: sun
+      event: sunrise
+      offset: -00:02:00
+  action:
+    service: switch.turn_off
+    entity_id: switch.porch_switch    
+    
+# Adjust Flux color when flux lights turn on
+- alias: Adjust Flux Color
+  trigger:
+    - platform: state
+      entity_id:
+      - light.kitchen_cabinets
+      - light.cornice
+      to: 'on'
+  action:
+    service: switch.fluxer_update
+    
+# Turn on porch light when front door opens and the sun isn't up
+- alias: Turn on Porch Light w/ Door
+  trigger:
+    - platform: state
+      entity_id: sensor.front_door
+      from: 'Door Closed'
+      to: 'Door Open'
+  condition:
+    condition: or  
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "00:20:00"
+      - condition: sun
+        before: sunrise
+  action:
+    service: switch.turn_on
+    entity_id:
+      - switch.porch_switch
+      
+# Turn off porch light ten minutes after front door opens and the sun isn't up
+- alias: Turn off Porch Light after Door Close
+  trigger:
+    - platform: state
+      entity_id: sensor.front_door
+      from: 'Door Open'
+      to: 'Door Closed'
+      for:
+        minutes: 10
+  condition:
+    condition: or  
+    conditions:
+      - condition: time
+        after: '21:45:00'
+      - condition: sun
+        before: sunrise
+  action:
+    service: switch.turn_off
+    entity_id:
+      - switch.porch_switch    
+
+# Notify Josh when Sam gets home
+- alias: Message when Sam comes home
+  trigger:
+    - platform: state
+      entity_id: device_tracker.sam_iphone
+      #from: 'away'
+      to: 'home'
+  action:
+    service: notify.josh_phone
+    data:
+      message: "Hey your girl just got home!!"
+      
+    
+      
+    
+# Welcome Josh home
+# - alias: Google Home welcome Josh
+  # trigger:
+    # - platform: state
+      # entity_id:  sensor.front_door
+      # from: 'Door Closed'
+      # to: 'Door Open'
+  # condition:
+    
+
+      
+ 
+# # syncing mi-light remote
+# - alias: MiLight Remote Cornice Sync
+  # trigger:
+    # - platform: mqtt
+      # topic: milight-update/0x6012/rgbw/2
+  # action:
+    # - service: mqtt.publish
+      # data_template:
+        # topic: "cmnd/sonoff-RGBCW/Power"
+        # payload_template: >-
+          # {% if trigger.payload_json.state is defined %}
+          # '{{ trigger.payload_json.state }}'
+          # {% endif %}  
+    # - service: mqtt.publish
+      # data_template:
+        # topic: "cmnd/sonoff-RGBCW/HsbColor"
+        # payload_template: >-
+          # {%- if trigger.payload_json.hue is defined -%}
+          # {{ trigger.payload_json.hue }},
+          # {%- else -%}
+          # {{ states.light.cornice.attributes.hs_color[0] }},
+          # {%- endif -%}100,
+          # {%- if trigger.payload_json.brightness is defined -%}
+          # {{ trigger.payload_json.brightness }}
+          # {%- else -%}
+          # {{ states.light.cornice.attributes.brightness }}
+          # {%- endif -%}
+        
+       
+      
+# # syncing mi-light remote with group
+# - alias: MiLight Remote Bedroom Group Sync
+  # trigger:
+  # - platform: mqtt
+    # topic: milight-update/0x6012/rgbw/0
+      
+  # action:
+  # - service: mqtt.publish
+    # data_template:
+      # topic: milight-update/0x6012/rgbw/1 
+      # payload_template: >-
+        # {"state":"
+        # {%- if trigger.payload_json.state is defined -%}
+        # {{ trigger.payload_json.state }}
+        # {%- endif -%}"}
+  # - service: mqtt.publish
+    # data_template:
+      # topic: milight-update/0x6012/rgbw/3 
+      # payload_template: >-
+        # {"state":"
+        # {%- if trigger.payload_json.state is defined -%}
+        # {{ trigger.payload_json.state }}
+        # {%- endif -%}"}
+  # - service: mqtt.publish
+    # data_template:
+      # topic: milight-update/0x6012/rgbw/4 
+      # payload_template: >-
+        # {"state":"
+        # {%- if trigger.payload_json.state is defined -%}
+        # {{ trigger.payload_json.state }}
+        # {%- endif -%}"}            
+  # - service: mqtt.publish
+    # data_template:
+      # topic: "cmnd/sonoff-RGBCW/Power"
+      # payload_template: >-
+        # {% if trigger.payload_json.state is defined %}
+        # '{{ trigger.payload_json.state }}'
+        # {% endif %}  
+  # - service: mqtt.publish
+    # data_template:
+      # topic: "cmnd/sonoff-RGBCW/HsbColor"
+      # payload_template: >-
+        # {%- if trigger.payload_json.hue is defined -%}
+        # {{ trigger.payload_json.hue }},
+        # {%- else -%}
+        # {{ states.light.cornice.attributes.hs_color[0] }},
+        # {%- endif -%}100,
+        # {%- if trigger.payload_json.brightness is defined -%}
+        # {{ trigger.payload_json.brightness }}
+        # {%- else -%}
+        # {{ states.light.cornice.attributes.brightness }}
+        # {%- endif -%}  
+   
+   
+
+  
+# When HA starts
+- alias: HASS Startup
+  trigger:
+  - platform: homeassistant
+    event: start
+  action:
+  - service: switch.turn_on
+    entity_id: switch.fluxer
+    
+    
+# Security when away
+- alias: Away Security
+  trigger:
+    - platform: state
+      entity_id:
+      - sensor.living_room_motion
+      - sensor.office_motion
+      to: 'Motion'
+    - platform: state
+      entity_id: sensor.front_door
+      to: 'Door Open'
+    - platform: state
+      entity_id: cover.garage_door_opener
+      to: 'opened'
+      
+  condition:
+    - condition: state
+      entity_id: input_boolean.away
+      state: 'on'
+  action:
+    - service: notify.josh_phone
+      data_template:
+        message: 'ALERT!!! {{trigger.entity_id}} went from {{trigger.from_state.state}} to {{trigger.to_state.state}}'
+  

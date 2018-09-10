@@ -1,0 +1,275 @@
+##########################################
+## Automations
+##########################################
+  automation.away:
+    hidden: true
+    
+  automation.home:
+    hidden: true
+
+##########################################
+## Covers
+##########################################
+  cover.myq:
+    hidden: true
+  
+  cover.garage_door_opener:
+    friendly_name: Garage Door
+
+    
+##########################################
+## Groups     
+##########################################
+  group.bedroom_lights:
+    icon: mdi:lightbulb
+  
+  group.christmas_lights:
+    hidden: true
+    
+  group.master_bedroom:
+    emulated_hue_name: "Master Bedroom"
+    
+  group.sabnzbd:
+    emulated_hue_hidden: true
+  
+  group.weather:
+    emulated_hue_hidden: true
+  
+  group.speedTest:
+    emulated_hue_hidden: true
+  
+  group.homeAssistantServer:
+    emulated_hue_hidden: true
+    
+  group.all_automations:
+    emulated_hue_hidden: true
+    
+  group.all_devices:
+    emulated_hue_hidden: true
+    
+  group.all_switches:
+    emulated_hue_hidden: true
+    
+  group.all_lights:
+    emulated_hue_hidden: true 
+
+    
+    
+##########################################
+## Lights
+##########################################    
+  
+  light.kitchen_cabinets:
+    friendly_name: Kitchen Cabinets
+    emulated_hue_name: "Kitchen Cabinets"
+    icon: mdi:stove
+    
+  light.lamp_dimmer_level:
+    hidden: true
+    
+  light.living_room_fan_light:
+    icon: mdi:lightbulb
+    friendly_name: Fan Light
+    
+    
+
+##########################################
+## Sensor
+##########################################
+  sensor.motion_detector_alarm_level:
+    hidden: true
+  
+  sensor.motion_detector_alarm_type:
+    hidden: true  
+  
+  sensor.motion_detector_burglar:
+    hidden: true
+    
+  sensor.motion_detector_sourcenodeid:
+    hidden: true
+
+  binary_sensor.motion_detector_sensor:
+    hidden: true
+    
+  sensor.front_door_access_control:
+    hidden: true
+    
+  sensor.front_door_alarm_level:
+    hidden: true
+    
+  sensor.front_door_alarm_type:
+    hidden: true
+    
+  sensor.front_door_burglar:
+    hidden: true
+    
+  sensor.front_door_sourcenodeid:
+    hidden: true
+    
+  #zwave.front_door:
+  #  hidden: true
+  
+  binary_sensor.front_door_sensor:
+    hidden: true  
+    
+  binary_sensor.living_room_sensor:
+    hidden: true
+    
+  sensor.living_room_appliance:
+    hidden: true
+    
+  sensor.living_room_burglar:
+    hidden: true
+    
+  sensor.living_room_clock:
+    hidden: true
+    
+  sensor.living_room_emergency:
+    hidden: true
+    
+  sensor.living_room_homehealth:
+    hidden: true
+    
+  sensor.living_room_sourcenodeid:
+    hidden: true
+  
+  sensor.living_room_alarm_level:
+    hidden: true
+    
+  sensor.living_room_alarm_type:
+    hidden: true
+    
+  sensor.living_room_power_management:
+    hidden: true
+    
+  sensor.living_room_luminance:
+    icon: mdi:weather-sunny
+    friendly_name: Living Room Light
+    
+  sensor.living_room_temperature:
+    friendly_name: Living Room Temperature
+  
+  sensor.living_room_relative_humidity:
+    friendly_name: Living Room Humidity
+    icon: mdi:water-percent
+    
+  binary_sensor.living_room_multisensor_sensor:
+    hidden: true
+  sensor.living_room_multisensor_alarm_level:
+    hidden: true
+  sensor.living_room_multisensor_alarm_type:
+    hidden: true
+  sensor.living_room_multisensor_burglar:
+    hidden: true
+  sensor.living_room_multisensor_emergency:
+    hidden: true
+  sensor.living_room_multisensor_sourcenodeid:
+    hidden: true
+  sensor.living_room_multisensor_system:
+    hidden: true
+    
+  binary_sensor.bedroom_multisensor_sensor:
+    hidden: true
+  sensor.master_bedroom_alarm_type:
+    hidden: true
+  sensor.master_bedroom_burglar:
+    hidden: true
+  sensor.master_bedroom_motion_alarm:
+    hidden: true
+  sensor.master_bedroom_power_management:
+    hidden: true
+  sensor.master_bedroom_sourcenodeid:
+    hidden: true
+    
+  binary_sensor.staircase_multisensor:
+    hidden: true
+  sensor.staircase_multisensor_alarm_level:
+    hidden: true
+  sensor.staircase_multisensor_alarm_type:
+    hidden: true
+  sensor.staircase_multisensor_appliance:
+    hidden: true
+  sensor.staircase_multisensor_burglar:
+    hidden: true
+  sensor.staircase_multisensor_emergency:
+    hidden: true
+  sensor.staircase_multisensor_sourcenodeid:
+    hidden: true
+  
+  
+##########################################
+## Switch
+##########################################
+  switch.fireplace:
+    #assumed_state: true
+    icon: mdi:fire
+    emulated_hue_name: "Fireplace"
+    emulated_hue_hidden: false
+    
+  switch.lamp:
+    friendly_name: Living Room Lamp
+    icon: mdi:lightbulb
+    
+  switch.heated_blanket:
+    icon: mdi:thermometer
+    friendly_name: Heated Blanket
+    emulated_hue_name: "Electric Blanket"
+    emulated_hue_hidden: false
+    
+  switch.outside_bug_zapper:
+    icon: mdi:bug
+    friendly_name: Outside Bug Zapper
+    #hidden: {{ is_state('switch.outside_bug_zapper', 'unavailable')}}
+    
+  switch.outside_christmas_lights:
+    icon: mdi:lightbulb
+    
+  switch.garland:
+    icon: mdi:lightbulb
+    
+  switch.christmas_tree:
+    icon: mdi:pine-tree
+    
+  switch.air_purifier:
+    icon: mdi:fan
+    friendly_name: Air Purifier
+    emulated_hue_hidden: false
+    emulated_hue_name: "Air Purifier"
+    
+  switch.bedroom_ceiling_fan_4:
+    icon: mdi:fan
+    emulated_hue_hidden: false
+    friendly_name: "Bedroom Ceiling Fan"
+    
+  switch.porch_switch:
+    icon: mdi:lightbulb
+    friendly_name: "Porch Light"
+    
+
+    
+    
+##########################################
+## Z-Wave
+##########################################
+
+  zwave.lamp_dimmer:
+    hidden: true
+    
+  zwave.front_door:
+    hidden: true
+    
+  zwave.living_room:
+    hidden: true
+    
+  zwave.motion_detector:
+    hidden: true
+    
+  zwave.porch:
+    hidden: true
+    
+  zwave.zstick:
+    hidden: true
+    
+    
+    
+    

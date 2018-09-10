@@ -1,0 +1,6 @@
+  - platform: synology
+    url: !secret synology_ip_address
+    username: !secret synology_username
+    password: !secret synology_password
+    verify_ssl: False
+    timeout: 15

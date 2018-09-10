@@ -1,0 +1,792 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  latitude: !secret latitude
+  longitude: !secret longitude
+  elevation: !secret elevation
+  unit_system: imperial
+  time_zone: America/New_York
+  
+  packages: !include_dir_named packages
+  customize: !include customize.yaml
+  
+  
+# Enables the frontend
+frontend: !include frontend.yaml
+
+# Enables configuration UI
+config:
+
+# Enable Map
+map:
+
+updater:
+  # Optional, allows Home Assistant developers to focus on popular components.
+  include_used_components: true
+
+# Discover some devices automatically
+# discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+conversation:
+
+# Enables support for tracking state changes over time
+history:
+
+# View all events in a logbook
+logbook: !include includes/logbook.yaml
+
+# Track the sun
+sun:
+
+# Purge Database Interval
+recorder:
+  purge_interval: 2
+  purge_keep_days: 14
+
+weather:
+  - platform: darksky
+    api_key: !secret dark_sky_api_key
+
+# Text to Speech
+tts:
+  - platform: google
+    # cache: true
+    # cache_dir: /temp/tts
+    # time_memory: 300
+
+
+panel_iframe:
+  configurator:
+    title: Configurator
+    icon: mdi:wrench
+    url: !secret configurator_url
+
+# Enables Cloud
+cloud:
+  google_actions:
+    filter:
+      include_domains:
+      - light
+      - switch
+      - cover
+      - fan
+      exclude_domains:
+      - automations
+      - groups
+      
+http:
+  #base_url: !secret HASS_base_url
+  #ssl_certificate: !secret ssl_certificate
+  #ssl_key: !secret ssl_key
+  api_password: !secret http_password
+  login_attempts_threshold: 5
+  ip_ban_enabled: True
+
+
+
+
+# Z-Wave
+zwave:
+  usb_path: /dev/ttyACM0
+  network_key: !secret zwave_network_key
+
+# Zigbee
+# zha:
+    # usb_path: /dev/ttyUSB0
+    # #database_path: /home/homeassistant/.homeassistant/zigbee.db
+    # database_path: /config/databases/zigbee.db
+    # radio_type: xbee
+    
+    
+input_boolean:
+  away:
+    name: On Travel
+    initial: off
+    icon: mdi:car
+    
+# OpenMQTTGateway Status
+binary_sensor:
+  - platform: mqtt
+    name: "OpenMQTTGateway"
+    state_topic: "home/OpenMQTTGateway/LWT"
+    payload_on: "Online"
+    payload_off: "Offline"
+    device_class: "connectivity"
+
+# 433MHz door sensor    
+  - platform: mqtt
+    name: "Garage Door"
+    state_topic: "home/OpenMQTTGateway/433toMQTT"
+    payload_on: "11685386"
+    payload_off: "11685390"
+    device_class: "door"
+
+
+sensor:
+  - platform: sabnzbd
+    host: !secret sabnzbd_ip
+    port: 8082
+    api_key: !secret sabnzbd_api_key
+    name: Media Downloader
+    monitored_variables:
+      - 'current_status'
+      - 'speed'
+      - 'queue_size'
+      - 'queue_remaining'
+      - 'disk_size'
+      - 'disk_free'
+  
+  - platform: uptime
+    name: Time Online
+    unit_of_measurement: hours
+    
+  # Get external IP address
+  - platform: dnsip
+  
+  # Get IP address of website
+  - platform: dnsip
+    hostname: joshilles.com
+    resolver: 8.8.8.8
+  
+  - platform: cert_expiry
+    host: "joshilles.com"
+    
+  - platform: template
+    sensors:
+      # Office Motion Detector (z-wave)
+      office_motion:
+        friendly_name: "Office Motion Sensor"
+        value_template: >-
+          {% if is_state('sensor.motion_detector_burglar','0') %}
+            No Motion
+          {% elif is_state('sensor.motion_detector_burglar','8') %}
+            Motion
+          {% else %}
+            Unknown
+          {% endif %}
+        icon_template: >-
+          {% if is_state('sensor.motion_detector_burglar','0') %}
+            mdi:human-male
+          {% elif is_state('sensor.motion_detector_burglar','8') %}
+            mdi:run-fast
+          {% else %}
+            mdi:cancel
+          {% endif %}
+      office_motion_battery:
+        friendly_name: "Office Motion Detector Battery"
+        device_class: battery
+        entity_id: zwave.motion_detector
+        value_template: '{{states.zwave.motion_detector.attributes.battery_level}}'
+      
+      # Front Door Z-Wave Sensor
+      front_door:
+        friendly_name: "Front Door"
+        value_template: >-
+          {% if is_state('sensor.front_door_access_control','23') %}
+            Door Closed
+          {% elif is_state('sensor.front_door_access_control','22') %}
+            Door Open
+          {% else %}
+            Unknown
+          {% endif %}
+        icon_template: >-
+          {% if is_state('sensor.front_door_access_control','23') %}
+            mdi:door-closed
+          {% elif is_state('sensor.front_door_access_control','22') %}
+            mdi:door-open
+          {% else %}
+            mdi:cancel
+          {% endif %}
+      front_door_battery:
+        friendly_name: "Front Door Battery"
+        device_class: battery
+        entity_id: zwave.front_door
+        value_template: '{{states.zwave.front_door.attributes.battery_level}}'
+      
+      # Living Room Z-Wave Multisensor
+      living_room_motion:
+        friendly_name: "Living Room Motion"
+        value_template: >-
+          {% if is_state('sensor.living_room_multisensor_alarm_level','0') %}
+            No Motion
+          {% elif is_state('sensor.living_room_multisensor_alarm_level','255') %}
+            Motion
+          {% else %}
+            Unknown
+          {% endif %}
+        icon_template: >-
+          {% if is_state('sensor.living_room_multisensor_alarm_level','0') %}
+            mdi:human-male
+          {% elif is_state('sensor.living_room_multisensor_alarm_level','255') %}
+            mdi:run-fast
+          {% else %}
+            mdi:cancel
+          {% endif %}
+      living_room_motion_battery:
+        friendly_name: "Living Room Motion Detector Battery"
+        device_class: battery
+        entity_id: zwave.living_room
+        value_template: '{{states.zwave.living_room_multisensor.attributes.battery_level}}'
+      
+      #Bedroom Multisensor
+      master_bedroom_motion:
+        friendly_name: "Bedroom Motion"
+        value_template: >-
+          {% if is_state('sensor.master_bedroom_motion_alarm','0') %}
+            No Motion
+          {% elif is_state('sensor.master_bedroom_motion_alarm','255') %}
+            Motion
+          {% else %}
+            Unknown
+          {% endif %}
+        icon_template: >-
+          {% if is_state('sensor.master_bedroom_motion_alarm','0') %}
+            mdi:human-male
+          {% elif is_state('sensor.master_bedroom_motion_alarm','255') %}
+            mdi:run-fast
+          {% else %}
+            mdi:cancel
+          {% endif %}
+      master_bedroom_motion_battery:
+        friendly_name: "Master Bedroom Motion Detector Battery"
+        device_class: battery
+        entity_id: zwave.bedroom_multisensor
+        value_template: '{{states.zwave.bedroom_multisensor.attributes.battery_level}}'
+        
+      #Staircase Multisensor
+      staircase_motion:
+        friendly_name: "Staircase Motion"
+        value_template: >-
+          {% if is_state('sensor.staircase_multisensor_alarm_level','0') %}
+            No Motion
+          {% elif is_state('sensor.staircase_multisensor_alarm_level','255') %}
+            Motion
+          {% else %}
+            Unknown
+          {% endif %}
+        icon_template: >-
+          {% if is_state('sensor.staircase_multisensor_alarm_level','0') %}
+            mdi:human-male
+          {% elif is_state('sensor.staircase_multisensor_alarm_level','255') %}
+            mdi:run-fast
+          {% else %}
+            mdi:cancel
+          {% endif %}
+      staircase_multisensor_battery:
+        friendly_name: "Staircase Multisensor Battery"
+        device_class: battery
+        entity_id: zwave.staircase_multisensor
+        value_template: '{{states.zwave.staircase_multisensor.attributes.battery_level}}'  
+        
+        
+      # Number of devices on WiFi Router
+      connected_devices:
+        friendly_name: "Devices on Network"
+        value_template: >-
+          {% for state in states.device_tracker if state.state == 'home'-%}
+            {% if loop.last -%}
+              {{ loop.index }}
+            {%- endif %}
+            {% else %}
+              0
+          {%- endfor %}
+        
+        
+  
+  - platform: mqtt
+    name: "Fireplace Temperature"
+    state_topic: "MySensorsGatewayPub/16/15/1/0/0"
+    unit_of_measurement: '°F'
+  
+  - platform: mqtt
+    name: "Josh Phone Battery"
+    state_topic: "owntracks/joshua/Josh_6P"
+    value_template: '{{ value_json.batt }}'
+    unit_of_measurement: '%'
+  
+  - platform: speedtest
+    monitored_conditions:
+      - ping
+      - download
+      - upload  
+    minute:
+     - 0
+     - 30
+    
+  - platform: systemmonitor
+    resources:
+    - type: disk_use_percent
+      arg: /home
+    - type: memory_use
+    - type: memory_free
+    - type: ipv4_address
+      arg: eth0
+    - type: since_last_boot
+  
+  - platform: synologydsm
+    host: !secret synology_dsm_ip
+    username: !secret synology_username
+    password: !secret synology_password
+    verify_ssl: False
+    monitored_conditions:
+      - disk_temp
+      - volume_status
+      - volume_size_used
+      - volume_size_total
+      - volume_percentage_used
+      - cpu_total_load
+      - network_up
+      - network_down
+
+#Nest Smart Thermostat  
+nest:  
+  client_id: !secret nest_client_id
+  client_secret: !secret nest_client_secret
+  binary_sensors:
+    monitored_conditions:
+      - 'online'
+      - 'fan'
+      - 'away'
+
+# MQTT
+mqtt:
+  broker: !secret home_assistant_ip_address
+  port: 1883
+  client_id: Home-Assistant
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  
+emulated_hue:
+  #type: alexa
+  host_ip: !secret home_assistant_ip_address
+  listen_port: 8300
+  #advertise_ip: 10.0.0.10
+  #advertise_port: 8080
+  #expose_by_default: true
+  exposed_domains:
+    - light
+    - switch
+    - group
+
+fan:
+  - platform: mqtt
+    name: "Living Room Fan"
+    availability_topic: "tele/sonoff-fan2/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    command_topic: "cmnd/sonoff-fan2/FanSpeed"
+    state_topic: "stat/sonoff-fan2/RESULT"
+    state_value_template: "{{ 'true' if value_json.FanSpeed > 0 else '0' }}"
+    speed_state_topic: "stat/sonoff-fan2/RESULT"
+    speed_command_topic: "cmnd/sonoff-fan2/FanSpeed"
+    payload_low_speed: 1
+    payload_medium_speed: 2
+    payload_high_speed: 3
+    payload_off: 0
+    payload_on: 'true'
+    speed_value_template: "{{ value_json.FanSpeed }}"
+    speeds:
+      - low
+      - medium
+      - high
+
+# Master Bedroom Fan via Broadlink Hub
+  # - platform: template
+    # fans:
+      # master_bedroom_fan:
+        # friendly_name: "Master Bedroom Fan"
+        # value_template: "{{ states('input_boolean.bedroom_fan') }}"
+        # turn_on:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.bedroom_fan_high
+        # turn_off:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.bedroom_fan_off
+            
+        
+cover:
+# Garage Door
+  - platform: myq
+    #name: "Garage Door"
+    username: !secret myq_username
+    password: !secret myq_password
+    type: chamberlain
+    
+# # Master Bedroom Curtains    
+  # - platform: template
+    # covers:
+      # bedroom_shades:
+        # friendly_name: Bedroom Shades
+        # open_cover:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.roller_shades_open
+        # close_cover:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.roller_shades_close
+        # stop_cover:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.roller_shades_stop
+      # bedroom_curtains:
+        # friendly_name: Bedroom Curtains
+        # open_cover:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.curtain_open
+        # close_cover:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.curtain_close    
+        # stop_cover:
+          # service: switch.turn_on
+          # data:
+            # entity_id: switch.curtain_stop
+    
+    
+
+light:
+
+  # - platform: mqtt_json
+    # command_topic: "milight/commands/0x6012/rgbw/1"
+    # state_topic: "milight/updates/0x6012/rgbw/1"
+    # name: "Bedroom Lamp"
+    # brightness: true
+    # rgb: true
+    # qos: 1
+    # white_value: true
+
+  # # - platform: mqtt_json
+    # # command_topic: "milight/0x6012/rgbw/2"
+    # # state_topic: "milight-update/0x6012/rgbw/2"
+    # # name: "Cornice-old"
+    # # brightness: true
+    # # rgb: true
+    # # qos: 1
+    # # white_value: true
+
+  # - platform: mqtt_json
+    # command_topic: "milight/commands/0x6012/rgbw/3"
+    # state_topic: "milight/updates/0x6012/rgbw/3"
+    # name: "Underbed LEDs"
+    # brightness: true
+    # rgb: true
+    # #qos: 1
+    # retain: true
+    # white_value: true
+ 
+  # - platform: mqtt_json
+    # command_topic: "milight/commands/0x6012/rgbw/4"
+    # state_topic: "milight/updates/0x6012/rgbw/4"
+    # name: "Headboard"
+    # brightness: true
+    # rgb: true
+    # #qos: 1
+    # retain: true
+    # white_value: true
+    
+  # # RGBW-CW/WW Controller for Cornice
+  # - platform: mqtt
+    # name: "Cornice"
+    # availability_topic: "tele/sonoff-RGBCW/LWT"
+    # payload_available: "Online"
+    # payload_not_available: "Offline"
+    # command_topic: "cmnd/sonoff-RGBCW/Power6"
+    # brightness_command_topic: "cmnd/sonoff-RGBCW/Dimmer"
+    # brightness_state_topic: "stat/sonoff-RGBCW/RESULT"
+    # brightness_scale: 100
+    # brightness_value_template: "{{ value_json.Dimmer }}"
+    # color_temp_command_topic: "cmnd/sonoff-RGBCW/CT"
+    # color_temp_state_topic: "stat/sonoff-RGBCW/RESULT"
+    # color_temp_value_template: "{{ value_json.CT }}"
+    # on_command_type: "last"
+    # payload_on: "ON"
+    # payload_off: "OFF"
+    # rgb_command_topic: "cmnd/sonoff-RGBCW/Color"
+    # rgb_command_template: "{{ '%02x%02x%02x' | format(red, green, blue)}}"
+    # rgb_state_topic: "stat/sonoff-RGBCW/RESULT"
+    # rgb_value_template: "{{(value_json.Channel[0]*2.55)|int}},{{(value_json.Channel[1]*2.55)|int}},{{(value_json.Channel[2]*2.55)|int}}"
+    # effect_state_topic: "stat/sonoff-RGBCW/RESULT"
+    # effect_command_topic: "cmnd/sonoff-RGBCW/Scheme"
+    # effect_list:
+      # - 0
+      # - 1
+      # - 2
+      # - 3
+      # - 4
+    # state_topic: "stat/sonoff-RGBCW/POWER6"
+    # #state_value_template: "{{ value_json.POWER }}"
+    # #retain: true
+    # qos: 1
+
+  # CW/WW Controller for Kitchen Cabinets
+  - platform: mqtt
+    name: "Kitchen Cabinets"
+    availability_topic: "tele/sonoff-CabLED/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    command_topic: "cmnd/sonoff-CabLED/Power"
+    brightness_command_topic: "cmnd/sonoff-CabLED/Dimmer"
+    brightness_state_topic: "stat/sonoff-CabLED/RESULT"
+    brightness_scale: 100
+    brightness_value_template: "{{ value_json.Dimmer }}"
+    color_temp_command_topic: "cmnd/sonoff-CabLED/CT"
+    color_temp_state_topic: "stat/sonoff-CabLED/RESULT"
+    color_temp_value_template: "{{ value_json.CT }}"
+    on_command_type: "last"
+    payload_on: "ON"
+    payload_off: "OFF"
+    state_topic: "stat/sonoff-CabLED/POWER"
+    #state_topic: "stat/sonoff-CabLED/RESULT"
+    #state_value_template: "{{ value_json.POWER }}"
+    #retain: true
+    qos: 1
+ 
+# Ceiling Fan Light 
+  - platform: mqtt
+    name: "Living Room Fan Light"
+    availability_topic: "tele/sonoff-fan2/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    command_topic: "cmnd/sonoff-fan2/POWER1"
+    state_topic: "stat/sonoff-fan2/RESULT"
+    state_value_template: "{{ value_json.POWER1 }}"
+    payload_on: 'ON'
+    payload_off: 'OFF'
+    
+# Eufy Components
+eufy:
+  devices:
+    - address: 192.168.0.158
+      access_token: zp2ZRqwVRhet6aLW086JgA
+      type: T1211
+      name: Smart Switch
+  username: !secret eufy_username
+  password: !secret eufy_password
+    
+switch:
+  - platform: mqtt
+    name: "Outside Bug Zapper"
+    command_topic: "cmnd/sonoff/power"
+    state_topic: "stat/sonoff/POWER"
+    availability_topic: "tele/sonoff/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+  
+  - platform: mqtt
+    name: "Air Purifier"
+    command_topic: "cmnd/Sonoff-Cord1/power"
+    state_topic: "stat/Sonoff-Cord1/POWER"
+    availability_topic: "tele/Sonoff-Cord1/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true  
+  
+  - platform: mqtt
+    name: "Heated Blanket"
+    command_topic: "cmnd/Sonoff-Cord2/power"
+    state_topic: "stat/Sonoff-Cord2/POWER"
+    availability_topic: "tele/Sonoff-Cord2/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true  
+  
+  - platform: mqtt
+    name: "Christmas Tree"
+    command_topic: "cmnd/Sonoff-Cord7/power"
+    state_topic: "stat/Sonoff-Cord7/POWER"
+    availability_topic: "tele/Sonoff-Cord7/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+    
+  - platform: mqtt
+    name: "Outside Christmas Lights"
+    command_topic: "cmnd/Sonoff-Cord9/power"
+    state_topic: "stat/Sonoff-Cord9/POWER"
+    availability_topic: "tele/Sonoff-Cord9/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+  
+  - platform: mqtt
+    name: "Office Lamp"
+    command_topic: "cmnd/Sonoff-Cord8/power"
+    state_topic: "stat/Sonoff-Cord8/POWER"
+    availability_topic: "tele/Sonoff-Cord8/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+    
+  - platform: mqtt
+    name: "Office Closet"
+    command_topic: "cmnd/sonoff-touch1/power"
+    state_topic: "stat/sonoff-touch1/POWER"
+    availability_topic: "tele/sonoff-touch1/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+  
+  - platform: mqtt
+    name: "Fireplace"
+    command_topic: "MySensorsGatewaySub/16/1/1/0/2"
+    state_topic: "MySensorsGatewayPub/16/1/1/0/2"
+    qos: 1
+    payload_on: "1"
+    payload_off: "0"
+    retain: true
+    icon: mdi:fire
+    
+  # MQTT Switches for curtains
+  - platform: mqtt
+    name: Curtain Open
+    command_topic: "cmnd/sonoff-RGBCW/Power3"
+    availability_topic: "tele/sonoff-RGBCW/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+    
+  - platform: mqtt
+    name: Curtain Stop
+    command_topic: "cmnd/sonoff-RGBCW/Power5"
+    availability_topic: "tele/sonoff-RGBCW/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+    
+  - platform: mqtt
+    name: Curtain Close
+    command_topic: "cmnd/sonoff-RGBCW/Power2"
+    availability_topic: "tele/sonoff-RGBCW/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+    
+  
+  - platform: tplink
+    host: 192.168.0.155
+    name: "Living Room Lamp"
+    
+  - platform: broadlink
+    host: 192.168.0.190
+    mac: '34:EA:34:CC:C9:40'
+    type: rm2_pro_plus
+    friendly_name: IR RF Gateway
+    switches:
+      eufy_robovac:
+        friendly_name: "Consuela"
+        command_on: 'JgCuAWRhEg8SMBIwEg8SLxMPEg4SDxExDxISLxMOEg8SDxIPEg8SDxIPEg8SDxIPEg8SDxEPEg8SDxEQEQ8SDxIPEg8SDxIPEg8SDxIPEjASDxIPEg8SAAKcZGISDxIwEjASDxIwERARDxIPETAQERIwEg8SDxIPEg8SDxIPEg8SDxIPEg8SDxIPEQ8SDxIPERARDxMOEg8SDxIPEg8SDxIPEg8SMBIPEg8SDxIAApxkYhIPEi8SMBIPEi8TDhMOEw4SMBAREjASDxIPEg8SDxIPEg8RDxIPEg8SDxIPEg8SDxIOEg8REBEQEg8SDxIPEg8SDxIPEg8SDhIwEg8SDxIPEgACnGRiEg8SMBIwEg8RMBIPEg8SDhIwEg8SMBIPEg8SDxIPEg8SDxIPEg8SDhIPEg8SDxIPEg4TDhIPEg8SDxIPEg8SDxIPEg8SDxIPETASDxIPEg8SAAKdZGESDxIwEjASDxIvEw8SDhIPEjAPEhIvEg8SDxIPEg8SDxIPEg8SDxIPEg8SDxIPEQ8SDxIPERAREA8REg8SDxIPEg8SDxIPEg8SMBIPEg8REBEADQUAAAAAAAAAAAAA'
+        command_off: 'JgCuAWVhEg8RMREwEg8SMBIPEg8SDhMOEw4TDhIPEjASMBExETASDxIPEg8SDxIOEw4TDhMOEw4SDxIPERAREBEQERARDxIPEjASMBIvEw4TLxIwETERAAKeZWASDxIwEjASDxIvEw8SDhMOEw4TDhIPEBERMBIwEjASMBIPEg8SDxIPEg4TDhMOEg8SDxIPERARDxIPEg8SDxIPEg8SMBIwEi8TDhMvEjARMBIAAp5lYBIPEjASMBIPEi8TDxIOEw4TDhMOEw4SDxExETERMBIwEg8SDxIPEg8SDhMOEw4TDhMOEg8REBEQERAREBEPEg8SDxIwEjASLxMOEy8SMBExEQACnWVgEg8SMBIwEg8SMBEPEw4SDxIPEg8SDxIOEjASMBIwEjASDxIPERARDxIPEg8SDxIPEg4SDxIPEg8SDxIPEg8SDxIPEjARMREwEg8SMBIvEjASAAKdZWEREBExETASDxIwEg8SDhMOEw4TDhMOEg8SMBExETERMBIPEg8SDxIPEg4TDhMOEw4TDhIPERAREBEQERAREBEPEg8SMBIwEi8TDhMvEjARMREADQUAAAAAAAAAAAAA'
+      roller_shades_open:
+        friendly_name: "Shades Open"
+        command_on: 'sgKEAxYKFgoXCgwUDRQMFAwUDBUMFAwVDBQXCRcKFwkXCgwUFwkMFRYMolA2CgwUDBQNFAwUFwkNFBcJFwoXCRcKDBQMFAwVDBQMFA0UFgoXChYKFwoMFAwUFwkXChcJDRQMFAwVDBQMFAwVDBQMFBcKFgoXChYKDBQXCgwUFwyhUDYKDBUMFAwUDBUWCgwUFwoXCRcKFgoMFAwVDBQMFAwVDBQXChYKFwkXCgwUDBQXChcJFwkNFAwUDRQMFAwVDBQMFAwVFwkXCRcKFgoMFRcJDBQXDKJPNwkMFQwUDBQNFBcJDBUXCRcJFwoXCQ0UDBQNEw0UDBQNFBYKFwkXChcJDBQMFRYKFwkXCgwVDBQMFAwVDBQMFAwVDBQXCRcKFwkXCgwUFwkMFRYMolA2CgwUDBUMFAwUFwoMFBcKFgoWChcKDBQMFAwVDBQMFQwUFwkXChYKFwoMFAwUFwoWChcJDBUMFAwVDBQMFA0UDBQMFBcKFgoWCxYKDBQXCgwUFg2hUDcJDBULFQwUDBUWCgwUFwoWChcKFgoMFAwVDBQMFQwUDBQXChYKFwkXCgwUDBQXChYKFwoMFAwUDBUMFAwVDBQMFAwVFgoXCRcKFgoMFRYKDBQXDKFRNgkMFQwUDBUMFBcJDRQWChcKFgoWCgwVDBQMFQwUDBQMFBcKFwoWChYKDBUMFBYKFwoWCgwVDBQMFAwVDBQMFQwUDBQXCRcKFwkXCgwUFgoMFRYNoVA2CgwUDBUMFAwVFgoMFBcKFgoXCRcKDBQMFQwUDBQNFAwUFwkXChYKFwoMFAwUFwoWChcJDBUMFAwVDBQMFAwVDBQMFBcKFwkXChYKDBQXCgwUFwyhUDYKDBQMFQwUDBUWCgwVFgoXCRcKFgoMFAwVDBQMFQwUDBQXChYKFwoWCgwUDBUWChcJFwoMFAwVDBQMFAwVDBQMFAwVFwkXChYKFwkMFRYKDBQXDKFQNwkMFQwUDBUMFBcJDBUWChcKFgoXCQwVDBQMFQwUDBUMFBcJFwkXChYKDBUMFBcJFwoWCgwVDBQMFAwVDBQMFQwUDBQXCRcKFwkXCgwUFgoNFBcMoVA2CgwUDBUMFAwUFwoMFBYKFwoWChcKDBQMFA0UDBQMFQwUFwkXChcJFwoMFAwUFwoWChYLDBQMFAwVDBQMFAwVDBQMFRYKFgoXChcJDBQXCgwUFwAF3AAAAAA='
+        command_off: 'sgKEAxYKFgoXCgwUDRQMFAwUDBUMFAwVDBQXCRcKFwkXCgwUFwkMFRYMolA2CgwUDBQNFAwUFwkNFBcJFwoXCRcKDBQMFAwVDBQMFA0UFgoXChYKFwoMFAwUFwkXChcJDRQMFAwVDBQMFAwVDBQMFBcKFgoXChYKDBQXCgwUFwyhUDYKDBUMFAwUDBUWCgwUFwoXCRcKFgoMFAwVDBQMFAwVDBQXChYKFwkXCgwUDBQXChcJFwkNFAwUDRQMFAwVDBQMFAwVFwkXCRcKFgoMFRcJDBQXDKJPNwkMFQwUDBQNFBcJDBUXCRcJFwoXCQ0UDBQNEw0UDBQNFBYKFwkXChcJDBQMFRYKFwkXCgwVDBQMFAwVDBQMFAwVDBQXCRcKFwkXCgwUFwkMFRYMolA2CgwUDBUMFAwUFwoMFBcKFgoWChcKDBQMFAwVDBQMFQwUFwkXChYKFwoMFAwUFwoWChcJDBUMFAwVDBQMFA0UDBQMFBcKFgoWCxYKDBQXCgwUFg2hUDcJDBULFQwUDBUWCgwUFwoWChcKFgoMFAwVDBQMFQwUDBQXChYKFwkXCgwUDBQXChYKFwoMFAwUDBUMFAwVDBQMFAwVFgoXCRcKFgoMFRYKDBQXDKFRNgkMFQwUDBUMFBcJDRQWChcKFgoWCgwVDBQMFQwUDBQMFBcKFwoWChYKDBUMFBYKFwoWCgwVDBQMFAwVDBQMFQwUDBQXCRcKFwkXCgwUFgoMFRYNoVA2CgwUDBUMFAwVFgoMFBcKFgoXCRcKDBQMFQwUDBQNFAwUFwkXChYKFwoMFAwUFwoWChcJDBUMFAwVDBQMFAwVDBQMFBcKFwkXChYKDBQXCgwUFwyhUDYKDBQMFQwUDBUWCgwVFgoXCRcKFgoMFAwVDBQMFQwUDBQXChYKFwoWCgwUDBUWChcJFwoMFAwVDBQMFAwVDBQMFAwVFwkXChYKFwkMFRYKDBQXDKFQNwkMFQwUDBUMFBcJDBUWChcKFgoXCQwVDBQMFQwUDBUMFBcJFwkXChYKDBUMFBcJFwoWCgwVDBQMFAwVDBQMFQwUDBQXCRcKFwkXCgwUFgoNFBcMoVA2CgwUDBUMFAwUFwoMFBYKFwoWChcKDBQMFA0UDBQMFQwUFwkXChcJFwoMFAwUFwoWChYLDBQMFAwVDBQMFAwVDBQMFRYKFgoXChcJDBQXCgwUFwAF3AAAAAA='
+      roller_shades_close:
+        friendly_name: "Shades Close"
+        command_on: 'rgDeABcKFgoXCRcKDBQMFQwUFgoNFAwUDBULFQwUDRQMFAwUFwoWChYLCxUMFQsVDBQXDKFQNgoMFA0UDBQMFRYKDBQXChcJFwoWCgwUDBUMFAwVDBQMFBcKFwkXChYKFwkMFQwUDBQXCgwUDBQNFAwUDBUMFAwUDRQWCxYKFgoMFA0UDBQMFBcMoVE2CgwUDBQNFAwUFwoLFRYKFwoWChYKDRQMFAwVDBQMFQsVFgoXChYKFgoXCgwUDBULFRYKDBULFQwUDRQMFAwVCxUMFBcKFgoXCgwUDBQMFQwUFgAF3AAAAAAAAAAAAAA='
+        command_off: 'rgDeABcKFgoXCRcKDBQMFQwUFgoNFAwUDBULFQwUDRQMFAwUFwoWChYLCxUMFQsVDBQXDKFQNgoMFA0UDBQMFRYKDBQXChcJFwoWCgwUDBUMFAwVDBQMFBcKFwkXChYKFwkMFQwUDBQXCgwUDBQNFAwUDBUMFAwUDRQWCxYKFgoMFA0UDBQMFBcMoVE2CgwUDBQNFAwUFwoLFRYKFwoWChYKDRQMFAwVDBQMFQsVFgoXChYKFgoXCgwUDBULFRYKDBULFQwUDRQMFAwVCxUMFBcKFgoXCgwUDBQMFQwUFgAF3AAAAAAAAAAAAAA='
+      roller_shades_stop:
+        friendly_name: "Shades Stop"
+        command_on: 'rgKEAwwUDBQMFQwUDBUMFAwVDBQXCRcKFgoMFAwVFgoXCRcMoVA2CgwVDBQMFQsVFwkMFRcJFwoWChYKDBUMFAwVCxUMFAwVFgoXCRcKFgoXCQwVFgoMFRYKDBQMFQwUDBULFQwUDBULFRcKFgoWCgwVDBQXChYKFgyiUDYKDBQMFQwUDBQXCgwUFwoWCg4JCRcKDBQMFQsVDBQMFQwUFgoXChYKFwkXCgwUFwoMFBcJDBUMFAwVCxUMFAwVDBQMFRYKFgoXCQ0UDBQXChYKFwwggVA2CgwVCxUMFAwVFgoMFBcKFgoXChYKDBQNFAwUDBUMFAwUFwoWChYKFwoWCgwVFgoMFBcKDBQMFQwUDBQMFQwUDBUMFBYKFwoWCgwUDBUXCRcJFwyhUTYKCxUMFAwVDBQWCwsVFgoXChYKFgoMFQwUDBUMFAwUDBUWChcKFgoWChYLCxUWCgwVFgoMFAwVDBQMFQsVDBQMFQwUFwoWChYKDBUMFBcKFgoWDaFQNgoMFQsVDBQMFRYKDBQWCxYKFgoXCgwUDBUMFAwVCxUMFAgPCRcKFgoXChYKDBQXCgwUFwoMFAwUDBUMFAwUDBUMFAwVBBQKFgsWCgwUDBUWChYKFwyhUDYKDRQMFAwVCxUWCgwVFgoWCxYKFgoMFQwUDBQMFQwUDBUWChYKFgsWChcJDBUWCgwUFwoMFAwVDBQMFQsVDBQMFQsVFgoXChYKDBUMFBYKFgsWDHsmUTYKDBQMFA0UDBQXCgwUFgoXChYKFgsMFAwUDBUMFAwUDBUWChcJFwoWChcKDBQXCQwVFgoMFQwUDBQNFAwUDBUMFAwUFwoWChYKDBUMFBcKFgoWDKFRNgoMFAwVCxUMFRYKDBQXChYKFwkXCgwUDBULFQwVDBQLFRcKFgoWChcKFgoMFRYKDBQXCgwUDBQMFQwUDBUMFAwUDBUWChcJFwoMFAwVFgoXCRcMoVA3CgsVCxUMFAwVFgoMFRYKFgsWChYKDBUMFAwUDBUMFAwVFgoWChcKFgoXCgwUFgoMFRYKDBQMFQwUDBUMFAwUDBUMFBcJFwoWCgwVDBQWCxYKFgyhUTYKDBQMFQsVDBQXCgwUFwkXChYKFgsMFAwVCxUMFAwUDBUWChcKFgoWCxYKDBQXCgwUFwkMFQwUDBUMFAwUDBUMFAwVFgoWChYLDBQMFBcKEQUKFgAF3AAAAAA='
+        command_off: 'rgKEAwwUDBQMFQwUDBUMFAwVDBQXCRcKFgoMFAwVFgoXCRcMoVA2CgwVDBQMFQsVFwkMFRcJFwoWChYKDBUMFAwVCxUMFAwVFgoXCRcKFgoXCQwVFgoMFRYKDBQMFQwUDBULFQwUDBULFRcKFgoWCgwVDBQXChYKFgyiUDYKDBQMFQwUDBQXCgwUFwoWCg4JCRcKDBQMFQsVDBQMFQwUFgoXChYKFwkXCgwUFwoMFBcJDBUMFAwVCxUMFAwVDBQMFRYKFgoXCQ0UDBQXChYKFwwggVA2CgwVCxUMFAwVFgoMFBcKFgoXChYKDBQNFAwUDBUMFAwUFwoWChYKFwoWCgwVFgoMFBcKDBQMFQwUDBQMFQwUDBUMFBYKFwoWCgwUDBUXCRcJFwyhUTYKCxUMFAwVDBQWCwsVFgoXChYKFgoMFQwUDBUMFAwUDBUWChcKFgoWChYLCxUWCgwVFgoMFAwVDBQMFQsVDBQMFQwUFwoWChYKDBUMFBcKFgoWDaFQNgoMFQsVDBQMFRYKDBQWCxYKFgoXCgwUDBUMFAwVCxUMFAgPCRcKFgoXChYKDBQXCgwUFwoMFAwUDBUMFAwUDBUMFAwVBBQKFgsWCgwUDBUWChYKFwyhUDYKDRQMFAwVCxUWCgwVFgoWCxYKFgoMFQwUDBQMFQwUDBUWChYKFgsWChcJDBUWCgwUFwoMFAwVDBQMFQsVDBQMFQsVFgoXChYKDBUMFBYKFgsWDHsmUTYKDBQMFA0UDBQXCgwUFgoXChYKFgsMFAwUDBUMFAwUDBUWChcJFwoWChcKDBQXCQwVFgoMFQwUDBQNFAwUDBUMFAwUFwoWChYKDBUMFBcKFgoWDKFRNgoMFAwVCxUMFRYKDBQXChYKFwkXCgwUDBULFQwVDBQLFRcKFgoWChcKFgoMFRYKDBQXCgwUDBQMFQwUDBUMFAwUDBUWChcJFwoMFAwVFgoXCRcMoVA3CgsVCxUMFAwVFgoMFRYKFgsWChYKDBUMFAwUDBUMFAwVFgoWChcKFgoXCgwUFgoMFRYKDBQMFQwUDBUMFAwUDBUMFBcJFwoWCgwVDBQWCxYKFgyhUTYKDBQMFQsVDBQXCgwUFwkXChYKFgsMFAwVCxUMFAwUDBUWChcKFgoWCxYKDBQXCgwUFwkMFQwUDBUMFAwUDBUMFAwVFgoWChYLDBQMFBcKEQUKFgAF3AAAAAA='
+      bedroom_fan_off:
+        command_on: 'sgB4Ag0NDg0NDQ0NDQ0ODA4NDQ0NDQ0NDgwOqhsNDRoNGg4aDRoNGg4aGg0aDRsMDhoNGhsNGg0aDRsMDhoNGhsNDRobDA4aGg0bDA4aDRoNGhsNGg0OGRsNDRobDQ0aDRobDA4aGg0OGRsNDRoOGg0aDRoOGg0aDRoOGg0aDRoOGQ4aGwwbDRoNGwwbDRoNGg0bDRoNGwwbDRoNDhkOAANJDQ0NDQ4MDg0NDQ0NDgwODA4NDQ0ODA6qGg0OGQ4aDRoOGQ4aDRobDBsNGwwOGQ4aGwwbDRoNGwwOGQ4aGwwOGhoNDhkbDBsNDhkOGg0aGwwbDQ0aGwwOGhoNDhkOGhsMDhkbDQ0aGwwOGg0aDhoNGg4ZDhoNGg4ZDhoNGg4ZDhoaDRsMGw0aDRsMGw0aDRsMGw0aDRsMGw0NGg0AA4QODQ4MDgwODA4NDgwODA4MDgwODQ4MDqobDA4ZDhoOGQ4ZDhoOGRsMGw0bDA4ZDhobDBsMGw0bDA4ZDhobDA4ZHAwOGRsMHAwOGQ4aDRobDBsNDRobDA4ZHAwOGQ4aGwwOGRsNDhkbDA4aDhkOGQ4aDhkOGQ4aGwwOGg0aDhkbDA4aGwwbDRsMGwwbDRsMDhkbDRsMGwwOGhsMDgADSA4MDg0ODA4MDg0NDQ4MDgwODA4NDQ0OqRsNDhkOGQ4aDhkOGQ4aGwwbDRsMDhkOGhsMGwwbDRsMDhkOGhsMDhoaDQ0aGw0aDQ4ZDhoNGhsMGw0NGhsMDhoaDQ4ZDhoaDQ4ZGw0NGhsMDhoNGg4ZDhoNGg4ZDhobDA4ZDhoNGhsNDRobDBsMGw0bDBsNGg0OGRsNGg0bDA4aGg0NAAXc'
+        command_off: 'sgB4Ag0NDg0NDQ0NDQ0ODA4NDQ0NDQ0NDgwOqhsNDRoNGg4aDRoNGg4aGg0aDRsMDhoNGhsNGg0aDRsMDhoNGhsNDRobDA4aGg0bDA4aDRoNGhsNGg0OGRsNDRobDQ0aDRobDA4aGg0OGRsNDRoOGg0aDRoOGg0aDRoOGg0aDRoOGQ4aGwwbDRoNGwwbDRoNGg0bDRoNGwwbDRoNDhkOAANJDQ0NDQ4MDg0NDQ0NDgwODA4NDQ0ODA6qGg0OGQ4aDRoOGQ4aDRobDBsNGwwOGQ4aGwwbDRoNGwwOGQ4aGwwOGhoNDhkbDBsNDhkOGg0aGwwbDQ0aGwwOGhoNDhkOGhsMDhkbDQ0aGwwOGg0aDhoNGg4ZDhoNGg4ZDhoNGg4ZDhoaDRsMGw0aDRsMGw0aDRsMGw0aDRsMGw0NGg0AA4QODQ4MDgwODA4NDgwODA4MDgwODQ4MDqobDA4ZDhoOGQ4ZDhoOGRsMGw0bDA4ZDhobDBsMGw0bDA4ZDhobDA4ZHAwOGRsMHAwOGQ4aDRobDBsNDRobDA4ZHAwOGQ4aGwwOGRsNDhkbDA4aDhkOGQ4aDhkOGQ4aGwwOGg0aDhkbDA4aGwwbDRsMGwwbDRsMDhkbDRsMGwwOGhsMDgADSA4MDg0ODA4MDg0NDQ4MDgwODA4NDQ0OqRsNDhkOGQ4aDhkOGQ4aGwwbDRsMDhkOGhsMGwwbDRsMDhkOGhsMDhoaDQ0aGw0aDQ4ZDhoNGhsMGw0NGhsMDhoaDQ4ZDhoaDQ4ZGw0NGhsMDhoNGg4ZDhoNGg4ZDhobDA4ZDhoNGhsNDRobDBsMGw0bDBsNGg0OGRsNGg0bDA4aGg0NAAXc'
+      bedroom_fan_low:
+        command_on: 'sgA8AQ4MDg0NDQ4MDgwODA4NDgwODA4MDg0NqhsNDRoOGQ4aDRoOGQ4aGwwbDBsNDhkOGRsNGwwbDBsNDhkOGRsNDhkbDA4aGwwbDA4aDhkOGRsNGwwOGRwMDhkbDQ0aDhkbDQ0aGwwOGhsMDhkOGg4ZDhkOGg4ZDhkOGg4ZDhkOGhsMDhkbDRsMGwwcDBsMGw0bDBsMGw0bDA4ZGw0NAANJDgwODQ0NDQ0ODA4NDQ0NDQ0NDgwODQ2qGwwOGg4ZDhoNGg4ZDhoaDRsMGw0NGg4aGg0aDRsMGw0NGg4ZGw0NGhsMDhoaDRsNDRoNGg4ZGw0bDA4aGg0OGRsNDRoOGRsNDRobDA4aGg0OGg0aDRoOGQ4aDRoOGQ4aDRoOGQ4aGwwOGRsNGwwbDRoNGwwbDBsNGwwbDRoNDhkbDQ0ABdwAAAAAAAAAAAAAAAA='
+        command_off: 'sgA8AQ4MDg0NDQ4MDgwODA4NDgwODA4MDg0NqhsNDRoOGQ4aDRoOGQ4aGwwbDBsNDhkOGRsNGwwbDBsNDhkOGRsNDhkbDA4aGwwbDA4aDhkOGRsNGwwOGRwMDhkbDQ0aDhkbDQ0aGwwOGhsMDhkOGg4ZDhkOGg4ZDhkOGg4ZDhkOGhsMDhkbDRsMGwwcDBsMGw0bDBsMGw0bDA4ZGw0NAANJDgwODQ0NDQ0ODA4NDQ0NDQ0NDgwODQ2qGwwOGg4ZDhoNGg4ZDhoaDRsMGw0NGg4aGg0aDRsMGw0NGg4ZGw0NGhsMDhoaDRsNDRoNGg4ZGw0bDA4aGg0OGRsNDRoOGRsNDRobDA4aGg0OGg0aDRoOGQ4aDRoOGQ4aDRoOGQ4aGwwOGRsNGwwbDRoNGwwbDBsNGwwbDRoNDhkbDQ0ABdwAAAAAAAAAAAAAAAA='
+      bedroom_fan_med:
+        command_on: 'sgA8AQ4NDQ0NDQ0NDgwODQ0NDQ0ODA4NDQ0NqxoNDRoOGg0aDRoOGg0ZHAwbDRoNDRoOGhoNGg0bDRoNDRoOGhoNDRobDQ0aGwwbDQ0aDRoOGhoNGwwOGhoNDhoaDQ0aDhoaDQ0aGwwOGhoNDhoNGg0aDhoNGg0aDhoaDQ0aDhoNGg0aDhoaDRsMGw0aDRsMGw0NGhsMGw0aDRsMGw0NAANJDgwODA4NDQ0ODA4MDg0NDQ0NDgwODQ2qGwwOGg0aDhkOGg0aDhkbDRsMGwwOGg0aGwwbDRsMGw0NGg4ZGw0NGhsMDhoaDRsMDhoNGg4ZGw0aDQ4ZGw0NGhsMDhoNGhsMDhoaDQ4ZGw0NGg4ZDhoOGQ4aDRoOGRsNDRoOGQ4aDRoOGRsNGg0bDBsNGg0bDA4aGg0bDBsNGg0bDA4ABdwAAAAAAAAAAAAAAAA='
+        command_off: 'sgA8AQ4NDQ0NDQ0NDgwODQ0NDQ0ODA4NDQ0NqxoNDRoOGg0aDRoOGg0ZHAwbDRoNDRoOGhoNGg0bDRoNDRoOGhoNDRobDQ0aGwwbDQ0aDRoOGhoNGwwOGhoNDhoaDQ0aDhoaDQ0aGwwOGhoNDhoNGg0aDhoNGg0aDhoaDQ0aDhoNGg0aDhoaDRsMGw0aDRsMGw0NGhsMGw0aDRsMGw0NAANJDgwODA4NDQ0ODA4MDg0NDQ0NDgwODQ2qGwwOGg0aDhkOGg0aDhkbDRsMGwwOGg0aGwwbDRsMGw0NGg4ZGw0NGhsMDhoaDRsMDhoNGg4ZGw0aDQ4ZGw0NGhsMDhoNGhsMDhoaDQ4ZGw0NGg4ZDhoOGQ4aDRoOGRsNDRoOGQ4aDRoOGRsNGg0bDBsNGg0bDA4aGg0bDBsNGg0bDA4ABdwAAAAAAAAAAAAAAAA='
+      bedroom_fan_high:
+        command_on: 'sgA8AQ4MDgwODQ0NDQ0ODA4NDQ0NDQ4MDg0NqhsNDRoNGg4ZDhoNGg4ZGw0bDBsNDRoNGhsNGg0bDBsNDRoNGhsNDRoaDg0aGg0bDQ0aDRoOGhoNGg0OGRsNDRobDA4aDRobDA4aGg0OGhoNDRoOGg0aDRoOGg0aGwwOGg0aDRoOGg0aDhoaDRoNGw0aDRoNDhkbDRoNGw0aDRoNGw0NAANJDQ0ODA4MDg0NDQ0NDgwODQ0NDQ0ODA6qGg0OGQ4aDRoOGQ4aDhkbDRoNGwwOGg0aGwwbDRoNGwwOGg0aGwwOGhoNDhkbDRoNDhkOGg0aGwwbDQ0aGwwOGhsMDhoNGhsMDhoaDQ4ZGw0NGg4ZDhoNGg4ZDhoaDQ4ZDhoNGg4ZDhoNGhsMGw0aDRsMGw0NGhsMGw0bDBsMGw0bDA4ABdwAAAAAAAAAAAAAAAA='
+        command_off: 'sgA8AQ4MDgwODQ0NDQ0ODA4NDQ0NDQ4MDg0NqhsNDRoNGg4ZDhoNGg4ZGw0bDBsNDRoNGhsNGg0bDBsNDRoNGhsNDRoaDg0aGg0bDQ0aDRoOGhoNGg0OGRsNDRobDA4aDRobDA4aGg0OGhoNDRoOGg0aDRoOGg0aGwwOGg0aDRoOGg0aDhoaDRoNGw0aDRoNDhkbDRoNGw0aDRoNGw0NAANJDQ0ODA4MDg0NDQ0NDgwODQ0NDQ0ODA6qGg0OGQ4aDRoOGQ4aDhkbDRoNGwwOGg0aGwwbDRoNGwwOGg0aGwwOGhoNDhkbDRoNDhkOGg0aGwwbDQ0aGwwOGhsMDhoNGhsMDhoaDQ4ZGw0NGg4ZDhoNGg4ZDhoaDQ4ZDhoNGg4ZDhoNGhsMGw0aDRsMGw0NGhsMGw0bDBsMGw0bDA4ABdwAAAAAAAAAAAAAAAA='
+      bedroom_fan_light:
+        command_on: 'sgB4Ag4NDQ0NDQ4MDgwODQ0NDgwODA4NDQ0OqRsNDRoOGg0aDhkOGg0aGwwbDRoNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGwwbDQ0aDhkOGhsMGw0NGhsMDhkbDQ0aDhkbDQ4ZGw0NGhsMDhoNGg4ZDhoaDQ4ZDhkOGg4ZDhoNGg4ZDhkbDRsMGw0NGhsNGg0bDBsMGw0bDBsNGg0NAANJDgwODA4NDgwODA4NDQ0NDQ4MDgwODQ2qGw0NGg4ZDhoNGg4ZDhoaDRsNGg0NGg4aGg0bDBsNGg0NGg4aGg0NGhsNDRobDBsNDRoOGQ4aGg0bDA4aGg0OGRsNDRoOGRsNDRobDA4aGg0OGQ4aDRoOGRsMDhoOGQ4aDRoOGQ4aDRoOGhoNGwwbDQ0aGwwbDBsNGwwbDRoNGwwbDQ0AA6cNDQ0NDgwODQ0NDQ0NDQ4NDQ0NDQ0NDqoaDQ4ZDhoNGg4aDRoNGhsNGg0aDQ4aDRoaDRsNGg0aDQ4aDRobDA4ZGw0NGhsNGg0NGg4aDRobDBsNDRobDQ0aGg0OGQ4aGg0OGhoNDRobDQ0aDRoOGg0aDRoOGg0aGg0OGg0aGwwbDQ0aGwwbDBsNGwwbDRoNDRobDRoNDRoOGhoNDQADSQ4NDQ0ODA4MDgwODQ0NDQ0ODA4NDQ0NqxoNDRoOGg0aDRoOGg0aGg0bDBsNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGw0aDQ0aDhkOGhoNGwwOGhoNDhoaDQ0aDhoaDQ0aGw0NGhoNDhkOGg0aDhoNGg0aDhkbDQ0aDhkbDRsMDhkbDRsMGw0aDRsMGw0NGhsMGw0NGg4ZGw0NAAXc'
+        command_off: 'sgB4Ag4NDQ0NDQ4MDgwODQ0NDgwODA4NDQ0OqRsNDRoOGg0aDhkOGg0aGwwbDRoNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGwwbDQ0aDhkOGhsMGw0NGhsMDhkbDQ0aDhkbDQ4ZGw0NGhsMDhoNGg4ZDhoaDQ4ZDhkOGg4ZDhoNGg4ZDhkbDRsMGw0NGhsNGg0bDBsMGw0bDBsNGg0NAANJDgwODA4NDgwODA4NDQ0NDQ4MDgwODQ2qGw0NGg4ZDhoNGg4ZDhoaDRsNGg0NGg4aGg0bDBsNGg0NGg4aGg0NGhsNDRobDBsNDRoOGQ4aGg0bDA4aGg0OGRsNDRoOGRsNDRobDA4aGg0OGQ4aDRoOGRsMDhoOGQ4aDRoOGQ4aDRoOGhoNGwwbDQ0aGwwbDBsNGwwbDRoNGwwbDQ0AA6cNDQ0NDgwODQ0NDQ0NDQ4NDQ0NDQ0NDqoaDQ4ZDhoNGg4aDRoNGhsNGg0aDQ4aDRoaDRsNGg0aDQ4aDRobDA4ZGw0NGhsNGg0NGg4aDRobDBsNDRobDQ0aGg0OGQ4aGg0OGhoNDRobDQ0aDRoOGg0aDRoOGg0aGg0OGg0aGwwbDQ0aGwwbDBsNGwwbDRoNDRobDRoNDRoOGhoNDQADSQ4NDQ0ODA4MDgwODQ0NDQ0ODA4NDQ0NqxoNDRoOGg0aDRoOGg0aGg0bDBsNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGw0aDQ0aDhkOGhoNGwwOGhoNDhoaDQ0aDhoaDQ0aGw0NGhoNDhkOGg0aDhoNGg0aDhkbDQ0aDhkbDRsMDhkbDRsMGw0aDRsMGw0NGhsMGw0NGg4ZGw0NAAXc'
+        
+        
+# change light color throughout day    
+  - platform: flux
+    lights:
+      - light.kitchen_cabinets
+      - light.cornice
+    mode: mired
+    #interval: 10
+    name: Fluxer
+    #brightness: 175
+    start_time: '5:00'
+    stop_time: '21:00'
+    start_colortemp: 6500
+    sunset_colortemp: 2900
+    stop_colortemp: 2000
+    transition: 30
+
+media_player:
+  - platform: yamaha
+    host: 192.168.0.127
+    source_ignore:
+      - "Napster"
+      - "SiriusXM"
+      - "Pandora"
+      - "Spotify"
+      - "AirPlay"
+      - "SiriusXM"
+      - "AUDIO1"
+      - "AUDIO2"
+      - "AV2"
+      - "AV3"
+      - "AV4"
+      - "AV5"
+      - "AV6"
+      - "NET RADIO"
+      - "Rhapsody"
+      - "SERVER"
+      - "USB"
+      - "V-AUX"
+      - "iPod(USB)"
+    source_names:
+      HDMI1: "ChromeCast"
+      AV1: "TV Out"
+  - platform: plex
+    entity_namespace: plex
+    scan_interval: 5
+    use_episode_art: true
+
+#google_assistant: !include config/google_assistant.yaml
+camera: !include config/camera.yaml
+group: !include groups.yaml
+automation: !include automations.yaml
+notify: !include config/notify.yaml
+script: !include scripts.yaml
+device_tracker: !include device_tracker.yaml
+zone: !include zones.yaml
