@@ -83,17 +83,19 @@ sensor:
 automation:
   # Notify Josh if power goes out
   - alias: Power has gone out
+    initial_state: true
     trigger:
       - platform: state
         entity_id: sensor.ups_status
         to: 'On Battery'
     action:
-      service: notify.josh_phone
+      service: notify.house_members
       data:
         message: "Power went out at: {{ now().strftime('%H:%M') }}"  
 
   # Notify Josh when power comes back
   - alias: Power has returned
+    initial_state: true
     trigger:
       - platform: state
         entity_id: sensor.ups_status
@@ -108,7 +110,7 @@ automation:
         from: 'Low Battery'
         to: 'On Line Charging'    
     action:
-      service: notify.josh_phone
+      service: notify.house_members
       data:
         message: "Power returned at: {{ now().strftime('%H:%M') }}"   
 

@@ -14,6 +14,10 @@ homeassistant:
 # Enables the frontend
 frontend: !include frontend.yaml
 
+# Makes lovelace configured by yaml
+lovelace:
+  mode: yaml
+
 # Enables configuration UI
 config:
 
@@ -27,6 +31,7 @@ updater:
 # Discover some devices automatically
 # discovery:
 
+
 # Allows you to issue voice commands from the frontend in enabled browsers
 conversation:
 
@@ -38,6 +43,22 @@ logbook: !include includes/logbook.yaml
 
 # Track the sun
 sun:
+
+# Getting the Hassio Tab
+hassio:
+
+# InfluxDB
+influxdb:
+  host: 192.168.0.151
+  port: 8086
+  database: homeassistant
+  username: homeassistant
+  password: d64%hE$P$7xTzsB
+  max_retries: 3
+  default_measurement: state
+  include:
+    domains:
+      - sensor
 
 # Purge Database Interval
 recorder:
@@ -61,6 +82,14 @@ panel_iframe:
     title: Configurator
     icon: mdi:wrench
     url: !secret configurator_url
+  influxdb:
+    title: InfluxDB
+    icon: mdi:chart-areaspline
+    url: http://192.168.0.151:8888
+  grafana:
+    title: Grafana
+    icon: mdi:chart-timeline
+    url: http://192.168.0.151:3000
 
 # Enables Cloud
 cloud:
@@ -71,12 +100,48 @@ cloud:
       - switch
       - cover
       - fan
+      - script
       exclude_domains:
       - automations
       - groups
+      include_entities:
+      - group.christmas_lights
+      exclude_entities:
+      - switch.bedroom_fan_off
+      - switch.bedroom_fan_high
+      - switch.bedroom_fan_med
+      - switch.bedroom_fan_low
+      - switch.bedroom_fan_light
+      - switch.curtain_close
+      - switch.curtain_open
+      - switch.curtain_stop
+      - switch.fluxer
+      - switch.refrigerator_power
+      - switch.roller_shades_close
+      - switch.roller_shades_open
+      - switch.roller_shades_stop
+      - switch.washing_machine_power
+      
+      
+    entity_config:
+      script.bedroom_morning:
+        name: Bedroom Morning Routine
+        aliases:
+          - bedroom morning
+        room: master bedroom    
+      group.christmas_lights:
+        name: Christmas Lights
+        aliases:
+          - Christmas Lights
+          - Holiday Lights
+      switch.heated_blanket:
+        name: Electric Blanket
+        aliases:
+          - Electric Blanket
+          - Heated Blanket
       
 http:
-  #base_url: !secret HASS_base_url
+  base_url: !secret HASS_base_url
   #ssl_certificate: !secret ssl_certificate
   #ssl_key: !secret ssl_key
   api_password: !secret http_password
@@ -88,16 +153,9 @@ http:
 
 # Z-Wave
 zwave:
-  usb_path: /dev/ttyACM0
+  usb_path: /dev/ttyACM1
   network_key: !secret zwave_network_key
 
-# Zigbee
-# zha:
-    # usb_path: /dev/ttyUSB0
-    # #database_path: /home/homeassistant/.homeassistant/zigbee.db
-    # database_path: /config/databases/zigbee.db
-    # radio_type: xbee
-    
     
 input_boolean:
   away:
@@ -114,14 +172,23 @@ binary_sensor:
     payload_off: "Offline"
     device_class: "connectivity"
 
-# 433MHz door sensor    
-  - platform: mqtt
-    name: "Garage Door"
-    state_topic: "home/OpenMQTTGateway/433toMQTT"
-    payload_on: "11685386"
-    payload_off: "11685390"
-    device_class: "door"
+# # 433MHz door sensor    
+  # - platform: mqtt
+    # name: "Garage House Door"
+    # state_topic: "tele/sonoff-RFBridge/RESULT"
+    # value_template: '{{ value_json.RfReceived.Data }}'
+    # payload_on: "B24E0A"
+    # payload_off: "B24E0E"
+    # device_class: "door"
 
+openuv:
+  api_key: !secret openuv_api_key
+  sensors:
+    monitored_conditions:
+      - current_ozone_level
+      - current_uv_index
+      - max_uv_index
+      - safe_exposure_time_type_1
 
 sensor:
   - platform: sabnzbd
@@ -178,31 +245,7 @@ sensor:
         device_class: battery
         entity_id: zwave.motion_detector
         value_template: '{{states.zwave.motion_detector.attributes.battery_level}}'
-      
-      # Front Door Z-Wave Sensor
-      front_door:
-        friendly_name: "Front Door"
-        value_template: >-
-          {% if is_state('sensor.front_door_access_control','23') %}
-            Door Closed
-          {% elif is_state('sensor.front_door_access_control','22') %}
-            Door Open
-          {% else %}
-            Unknown
-          {% endif %}
-        icon_template: >-
-          {% if is_state('sensor.front_door_access_control','23') %}
-            mdi:door-closed
-          {% elif is_state('sensor.front_door_access_control','22') %}
-            mdi:door-open
-          {% else %}
-            mdi:cancel
-          {% endif %}
-      front_door_battery:
-        friendly_name: "Front Door Battery"
-        device_class: battery
-        entity_id: zwave.front_door
-        value_template: '{{states.zwave.front_door.attributes.battery_level}}'
+
       
       # Living Room Z-Wave Multisensor
       living_room_motion:
@@ -286,24 +329,36 @@ sensor:
         value_template: >-
           {% for state in states.device_tracker if state.state == 'home'-%}
             {% if loop.last -%}
-              {{ loop.index }}
+              {{ loop.index }}/
+              {%- for state in states.device_tracker -%}
+                {%- if loop.last -%}
+                  {{ loop.index }}
+                {%- endif %}
+              {%- endfor %}
             {%- endif %}
-            {% else %}
+            {%- else %}
               0
           {%- endfor %}
-        
-        
-  
+          
+  # Sonoff Pow2 Connected to Fridge
   - platform: mqtt
-    name: "Fireplace Temperature"
-    state_topic: "MySensorsGatewayPub/16/15/1/0/0"
-    unit_of_measurement: '°F'
+    name: "Refrigerator Daily Energy"
+    state_topic: "tele/sonoff-POW1/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Today"] }}'
+    unit_of_measurement: "kWh"
+  - platform: mqtt
+    name: "Refrigerator Power"
+    state_topic: "tele/sonoff-POW1/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Power"] }}'
+    unit_of_measurement: "W"
+       
   
   - platform: mqtt
     name: "Josh Phone Battery"
-    state_topic: "owntracks/joshua/Josh_6P"
+    state_topic: "owntracks/joshua/Josh_Pixel3"
     value_template: '{{ value_json.batt }}'
     unit_of_measurement: '%'
+    device_class: battery
   
   - platform: speedtest
     monitored_conditions:
@@ -322,7 +377,7 @@ sensor:
     - type: memory_free
     - type: ipv4_address
       arg: eth0
-    - type: since_last_boot
+    - type: last_boot
   
   - platform: synologydsm
     host: !secret synology_dsm_ip
@@ -351,7 +406,14 @@ nest:
 
 # MQTT
 mqtt:
+  discovery: true
   broker: !secret home_assistant_ip_address
+  birth_message:
+    topic: 'hass/status'
+    payload: 'online'
+  will_message:
+    topic: 'hass/status'
+    payload: 'offline'
   port: 1883
   client_id: Home-Assistant
   username: !secret mqtt_username
@@ -377,34 +439,26 @@ fan:
     payload_not_available: "Offline"
     command_topic: "cmnd/sonoff-fan2/FanSpeed"
     state_topic: "stat/sonoff-fan2/RESULT"
-    state_value_template: "{{ 'true' if value_json.FanSpeed > 0 else '0' }}"
+    state_value_template: >
+      {% if value_json.FanSpeed is defined %}
+        {% if value_json.FanSpeed == 0 -%}0{%- elif value_json.FanSpeed > 0 -%}3{%- endif %}
+      {% else %}
+        {% if states.fan.sonoff_fan.state == 'off' -%}0{%- elif states.fan.sonoff_fan.state == 'on' -%}3{%- endif %}
+      {% endif %}
+    #"{{ 'true' if value_json.FanSpeed > 0 else '0' }}"
     speed_state_topic: "stat/sonoff-fan2/RESULT"
     speed_command_topic: "cmnd/sonoff-fan2/FanSpeed"
-    payload_low_speed: 1
-    payload_medium_speed: 2
-    payload_high_speed: 3
-    payload_off: 0
-    payload_on: 'true'
+    payload_off: "0"
+    payload_on: "3"
+    payload_low_speed: "1"
+    payload_medium_speed: "2"
+    payload_high_speed: "3"
     speed_value_template: "{{ value_json.FanSpeed }}"
     speeds:
+      - off
       - low
       - medium
       - high
-
-# Master Bedroom Fan via Broadlink Hub
-  # - platform: template
-    # fans:
-      # master_bedroom_fan:
-        # friendly_name: "Master Bedroom Fan"
-        # value_template: "{{ states('input_boolean.bedroom_fan') }}"
-        # turn_on:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.bedroom_fan_high
-        # turn_off:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.bedroom_fan_off
             
         
 cover:
@@ -415,115 +469,9 @@ cover:
     password: !secret myq_password
     type: chamberlain
     
-# # Master Bedroom Curtains    
-  # - platform: template
-    # covers:
-      # bedroom_shades:
-        # friendly_name: Bedroom Shades
-        # open_cover:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.roller_shades_open
-        # close_cover:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.roller_shades_close
-        # stop_cover:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.roller_shades_stop
-      # bedroom_curtains:
-        # friendly_name: Bedroom Curtains
-        # open_cover:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.curtain_open
-        # close_cover:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.curtain_close    
-        # stop_cover:
-          # service: switch.turn_on
-          # data:
-            # entity_id: switch.curtain_stop
-    
-    
 
 light:
-
-  # - platform: mqtt_json
-    # command_topic: "milight/commands/0x6012/rgbw/1"
-    # state_topic: "milight/updates/0x6012/rgbw/1"
-    # name: "Bedroom Lamp"
-    # brightness: true
-    # rgb: true
-    # qos: 1
-    # white_value: true
-
-  # # - platform: mqtt_json
-    # # command_topic: "milight/0x6012/rgbw/2"
-    # # state_topic: "milight-update/0x6012/rgbw/2"
-    # # name: "Cornice-old"
-    # # brightness: true
-    # # rgb: true
-    # # qos: 1
-    # # white_value: true
-
-  # - platform: mqtt_json
-    # command_topic: "milight/commands/0x6012/rgbw/3"
-    # state_topic: "milight/updates/0x6012/rgbw/3"
-    # name: "Underbed LEDs"
-    # brightness: true
-    # rgb: true
-    # #qos: 1
-    # retain: true
-    # white_value: true
- 
-  # - platform: mqtt_json
-    # command_topic: "milight/commands/0x6012/rgbw/4"
-    # state_topic: "milight/updates/0x6012/rgbw/4"
-    # name: "Headboard"
-    # brightness: true
-    # rgb: true
-    # #qos: 1
-    # retain: true
-    # white_value: true
-    
-  # # RGBW-CW/WW Controller for Cornice
-  # - platform: mqtt
-    # name: "Cornice"
-    # availability_topic: "tele/sonoff-RGBCW/LWT"
-    # payload_available: "Online"
-    # payload_not_available: "Offline"
-    # command_topic: "cmnd/sonoff-RGBCW/Power6"
-    # brightness_command_topic: "cmnd/sonoff-RGBCW/Dimmer"
-    # brightness_state_topic: "stat/sonoff-RGBCW/RESULT"
-    # brightness_scale: 100
-    # brightness_value_template: "{{ value_json.Dimmer }}"
-    # color_temp_command_topic: "cmnd/sonoff-RGBCW/CT"
-    # color_temp_state_topic: "stat/sonoff-RGBCW/RESULT"
-    # color_temp_value_template: "{{ value_json.CT }}"
-    # on_command_type: "last"
-    # payload_on: "ON"
-    # payload_off: "OFF"
-    # rgb_command_topic: "cmnd/sonoff-RGBCW/Color"
-    # rgb_command_template: "{{ '%02x%02x%02x' | format(red, green, blue)}}"
-    # rgb_state_topic: "stat/sonoff-RGBCW/RESULT"
-    # rgb_value_template: "{{(value_json.Channel[0]*2.55)|int}},{{(value_json.Channel[1]*2.55)|int}},{{(value_json.Channel[2]*2.55)|int}}"
-    # effect_state_topic: "stat/sonoff-RGBCW/RESULT"
-    # effect_command_topic: "cmnd/sonoff-RGBCW/Scheme"
-    # effect_list:
-      # - 0
-      # - 1
-      # - 2
-      # - 3
-      # - 4
-    # state_topic: "stat/sonoff-RGBCW/POWER6"
-    # #state_value_template: "{{ value_json.POWER }}"
-    # #retain: true
-    # qos: 1
-
-  # CW/WW Controller for Kitchen Cabinets
+   # CW/WW Controller for Kitchen Cabinets
   - platform: mqtt
     name: "Kitchen Cabinets"
     availability_topic: "tele/sonoff-CabLED/LWT"
@@ -628,6 +576,18 @@ switch:
     payload_on: "ON"
     payload_off: "OFF"
     retain: true
+    
+  - platform: mqtt
+    name: "Garland"
+    command_topic: "cmnd/christmas/garland/power"
+    state_topic: "stat/christmas/garland/POWER"
+    availability_topic: "tele/christmas/garland/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
   
   - platform: mqtt
     name: "Office Lamp"
@@ -655,41 +615,80 @@ switch:
   
   - platform: mqtt
     name: "Fireplace"
-    command_topic: "MySensorsGatewaySub/16/1/1/0/2"
-    state_topic: "MySensorsGatewayPub/16/1/1/0/2"
+    command_topic: "cmnd/fireplace/POWER1"
+    state_topic: "stat/fireplace/POWER1"
+    availability_topic: "tele/fireplace/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
     qos: 1
-    payload_on: "1"
-    payload_off: "0"
+    payload_on: "ON"
+    payload_off: "OFF"
     retain: true
     icon: mdi:fire
-    
-  # MQTT Switches for curtains
+  
   - platform: mqtt
-    name: Curtain Open
-    command_topic: "cmnd/sonoff-RGBCW/Power3"
-    availability_topic: "tele/sonoff-RGBCW/LWT"
+    name: "Garage Door Shelf Light"
+    command_topic: "cmnd/garage/door_shelf_light/POWER1"
+    state_topic: "stat/garage/door_shelf_light/POWER"
+    availability_topic: "tele/garage/door_shelf_light/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+   
+  - platform: mqtt
+    name: "Garage Shelf Light"
+    command_topic: "cmnd/garage/shelf_light/POWER1"
+    state_topic: "stat/garage/shelf_light/POWER1"
+    availability_topic: "tele/garage/shelf_light/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true 
+    
+# Moved to packages/cornice.yaml   DELETE AFTER 12/5 and still functional
+  # # MQTT Switches for curtains
+  # - platform: mqtt
+    # name: Curtain Open
+    # command_topic: "cmnd/sonoff-RGBCW/Power3"
+    # availability_topic: "tele/sonoff-RGBCW/LWT"
+    # payload_available: "Online"
+    # payload_not_available: "Offline"
+    # payload_on: "ON"
+    # payload_off: "OFF"
+    
+  # - platform: mqtt
+    # name: Curtain Stop
+    # command_topic: "cmnd/sonoff-RGBCW/Power5"
+    # availability_topic: "tele/sonoff-RGBCW/LWT"
+    # payload_available: "Online"
+    # payload_not_available: "Offline"
+    # payload_on: "ON"
+    # payload_off: "OFF"
+    
+  # - platform: mqtt
+    # name: Curtain Close
+    # command_topic: "cmnd/sonoff-RGBCW/Power2"
+    # availability_topic: "tele/sonoff-RGBCW/LWT"
+    # payload_available: "Online"
+    # payload_not_available: "Offline"
+    # payload_on: "ON"
+    # payload_off: "OFF"
+    
+  - platform: mqtt
+    name: Refrigerator Power
+    command_topic: "cmnd/sonoff-POW1/POWER"
+    availability_topic: "tele/sonoff-POW1/LWT"
+    state_topic: "stat/sonoff-POW1/POWER"
     payload_available: "Online"
     payload_not_available: "Offline"
     payload_on: "ON"
     payload_off: "OFF"
-    
-  - platform: mqtt
-    name: Curtain Stop
-    command_topic: "cmnd/sonoff-RGBCW/Power5"
-    availability_topic: "tele/sonoff-RGBCW/LWT"
-    payload_available: "Online"
-    payload_not_available: "Offline"
-    payload_on: "ON"
-    payload_off: "OFF"
-    
-  - platform: mqtt
-    name: Curtain Close
-    command_topic: "cmnd/sonoff-RGBCW/Power2"
-    availability_topic: "tele/sonoff-RGBCW/LWT"
-    payload_available: "Online"
-    payload_not_available: "Offline"
-    payload_on: "ON"
-    payload_off: "OFF"
+  
     
   
   - platform: tplink
@@ -788,5 +787,6 @@ group: !include groups.yaml
 automation: !include automations.yaml
 notify: !include config/notify.yaml
 script: !include scripts.yaml
+scene: !include scene.yaml
 device_tracker: !include device_tracker.yaml
 zone: !include zones.yaml

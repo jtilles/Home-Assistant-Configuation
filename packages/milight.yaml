@@ -11,7 +11,8 @@ homeassistant:
 # group:
 
 light:
-  - platform: mqtt_json
+  - platform: mqtt
+    schema: json
     command_topic: "milight/commands/0x6013/rgbw/1"
     state_topic: "milight/updates/0x6013/rgbw/1"
     name: "Bedroom Lamp"
@@ -29,17 +30,21 @@ light:
     # qos: 1
     # white_value: true
 
-  - platform: mqtt_json
+  - platform: mqtt
+    schema: json
     command_topic: "milight/commands/0x6013/rgbw/3"
     state_topic: "milight/updates/0x6013/rgbw/3"
     name: "Underbed LEDs"
     brightness: true
+    brightness_state_topic: "milight/updates/0x6013/rgbw/3"
+    brightness_value_template: '{{ value_json.brightness }}'
     rgb: true
     #qos: 1
     retain: true
     white_value: true
  
-  - platform: mqtt_json
+  - platform: mqtt
+    schema: json
     command_topic: "milight/commands/0x6013/rgbw/4"
     state_topic: "milight/updates/0x6013/rgbw/4"
     name: "Headboard"

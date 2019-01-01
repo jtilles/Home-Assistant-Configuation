@@ -2,3 +2,12 @@
     platform: pushbullet
     api_key: !secret pushbullet_api_key
     
+  - name: Sam Phone
+    platform: pushbullet
+    api_key: !secret sam_pushbullet_api_key
+    
+  - name: House_Members
+    platform: group
+    services:
+      - service: josh_phone
+      - service: sam_phone

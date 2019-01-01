@@ -134,6 +134,14 @@ cover:
           service: switch.turn_on
           data:
             entity_id: switch.curtain_stop
+# Combo Curtain/Shades
+      bedroom_window_coverings:
+        friendly_name: Bedroom Window
+        value_template: "{{ states('cover.bedroom_curtains') }} "
+        open_cover:
+          service: script.open_bedroom_window_coverings
+        close_cover:
+          service: script.close_bedroom_window_coverings
 
 ###############################################################################
 #                               Automations

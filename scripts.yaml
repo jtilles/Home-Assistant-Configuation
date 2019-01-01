@@ -1,12 +1,309 @@
 turn_on_bedroom_fan:
   alias: Turn on bedroom ceiling fan
   sequence:  
+    # - service: switch.turn_on
+      # data:
+        # entity_id: 
+          # - switch.office_lamp
     - service: switch.turn_on
       data:
-        entity_id: switch.bedroom_ceiling_fan_4
+        entity_id: 
+          - switch.bedroom_ceiling_fan_4   
+          
     - delay: 
         seconds: 2
     - service: switch.turn_on
+      data_template:
+        entity_id: >-
+            {% if states('sensor.master_bedroom_temperature')|int > 72 %}
+            switch.bedroom_fan_high  
+            {% elif (states('sensor.master_bedroom_temperature')|int <= 72) and (states('sensor.master_bedroom_temperature')|int >= 68) %}
+            switch.bedroom_fan_med
+            {% else %}
+            switch.bedroom_fan_low
+            {% endif %}
+          
+# Close the bedroom curtains and shades.  Send close shades, wait 5 seconds and close curtains and shades again
+#  repeating command should improve reliability of RF transmit to shades        
+close_bedroom_window_coverings:
+  alias: Close Master Bedroom Window
+  sequence:
+    - service: cover.close_cover
       data:
-        entity_id: switch.bedroom_fan_high  
+        entity_id: 
+        - cover.bedroom_shades
+    - delay:
+        seconds: 5
+    - service: cover.close_cover
+      data:
+        entity_id:
+        - cover.bedroom_shades
+        - cover.bedroom_curtains
         
+# Open the bedroom curtains and shades.  Send open shades and curtains, wait 2 seconds and open shades again
+#  repeating command should improve reliability of RF transmit to shades          
+open_bedroom_window_coverings:
+  alias: Open Master Bedroom Window
+  sequence:
+    - service: cover.open_cover
+      data:
+        entity_id: 
+        - cover.bedroom_shades
+        - cover.bedroom_curtains
+    - delay:
+        seconds: 2
+    - service: cover.open_cover
+      data:
+        entity_id:
+        - cover.bedroom_shades
+
+
+###############################################################################
+## Script that is called to turn off fan light based on light in room        
+###############################################################################
+turn_off_fan_light:
+  alias: Turn off Fan Light
+  sequence:
+    - condition: numeric_state
+      entity_id: sensor.master_bedroom_luminance
+      above: 40
+    - service: switch.turn_on
+      data:
+        entity_id: switch.bedroom_fan_light
+      
+###############################################################################
+## Script that is called by automation for prepping bedroom for night        
+###############################################################################
+bedroom_nighttime:
+  alias: Prep Bedroom for Night
+  sequence:
+    - service: automation.turn_off
+      data:
+        entity_id: automation.adjust_flux_color
+    
+    # Turn up volume so you can hear it
+    - service: media_player.volume_set
+      data_template:
+        entity_id:
+          - media_player.kitchen_speaker
+        volume_level: 0.7
+        
+    - service: tts.google_say
+      entity_id:
+        - media_player.kitchen_speaker
+      data_template: 
+        message: >
+          {{ [
+          "Bedtime ya cock suckers",
+          "Nighty Night you filthy whore",
+          "Sleep well and go to Hell",
+          "I warmed up the bed for you... with your mother",
+          "Keep your dreams dry tonight son",
+          "Goodnight and if you dream of me, rembember I like it rough",
+          "Goodnight, if you're lucky you can have me for breakfast",
+          "Let's go to bed, I'll show you mine if you show me yours",
+          "Have I shown you my fish tank?",
+          "Let's go up stairs so I can sit on your face",
+          "Your clothes match my carpet perfectly, go upstairs and find out",
+          "That top is becoming on you... if I was on you, I'd be cumming too",
+          "Time to earn your rent money... get on your knees",
+          "Real men don't wear pink, they eat it ... cunninglingus",
+          "What's the difference between being hungry and being horny?... Where you put the cucumber",
+          "Come upstairs and fuck me like my uncle used to... hard.  I promise I won't tell",
+          "Spank me, it's the only way I learn",
+          "Do as Momma says, Hold me tight and Fuck me right"
+          ] | random }}
+    
+    - delay: 
+        seconds: 4
+    
+  # Turn down volume of Google Homes  
+    - service: media_player.volume_set
+      data_template:
+        entity_id:
+          - media_player.kitchen_speaker
+          - media_player.master_bedroom_speaker
+        volume_level: 0.1
+      
+    - service: switch.turn_off
+      data:
+        entity_id:
+        - switch.fluxer
+        - switch.living_room_lamp
+        - switch.fireplace
+        - switch.porch_switch
+        - switch.exterior_garage_light
+        - switch.garage_light
+        - switch.garage_door_shelf_light
+        - switch.garage_shelf_light
+        - switch.outside_christmas_lights
+        - switch.laundry_room_light
+    
+    - service: fan.turn_off
+      data:
+        entity_id:
+        - fan.living_room_fan
+    
+    - service: light.turn_off
+      data:
+        entity_id:
+         - light.kitchen_cabinets
+         - light.kitchen_switch
+        
+    - service: script.turn_on_bedroom_fan 
+    
+    - service: switch.turn_on
+      data:
+        entity_id:
+        - switch.air_purifier
+        - switch.bedroom_ceiling_fan_4
+        
+    # Turn headboard LEDS to Purple 50%
+    - service: light.turn_on    
+      data:
+        entity_id: light.headboard
+        brightness_pct: 50
+        rgb_color: [120,0,200]
+    
+    # - delay: 
+        # seconds: 1
+        
+    # Turn underbed LEDs to Pink 40%
+    - service: light.turn_on    
+      data:
+        entity_id: light.underbed_leds
+        brightness_pct: 20
+        rgb_color: [233,66,244]    
+    
+    # - delay: 
+        # seconds: 1
+    
+    # Turn Cornice to Green 20%
+    - service: light.turn_on    
+      data:
+        entity_id: light.cornice
+        brightness_pct: 20
+        rgb_color: [10,255,10]        
+    
+    # - delay: 
+        # seconds: 1  
+        
+    # Turn Bedroom Lamp to Red 70% if heated blanket is on, else Blue 70%
+    - service: script.bedroom_lamp
+    
+    - delay: 
+        seconds: 1
+        
+    # Repeat previous command%
+    - service: script.bedroom_lamp
+    
+    # Wait for 30 sec to see if the fan light is on, if so, then turn it off
+    - delay: 
+        seconds: 30
+    - service: script.turn_off_fan_light
+    
+###############################################################################
+## Script that is called by automation for in morning        
+###############################################################################
+bedroom_morning:
+  alias: Bedroom Morning
+  sequence:
+    - service: automation.turn_on
+      data:
+        entity_id: automation.adjust_flux_color
+    
+    # Turn up volume on google homes so you can hear it
+    - service: media_player.volume_set
+      data_template:
+        entity_id:
+          - media_player.kitchen_speaker
+          - media_player.master_bedroom_speaker
+        volume_level: 0.4
+        
+    # Turn fluxer back on, and bedroom fan off
+    - service: switch.turn_on
+      data:
+        entity_id:
+        - switch.fluxer
+        - switch.bedroom_fan_off
+        - switch.christmas_tree
+        - switch.garland
+    
+    # Turn on the lights in the kitchen
+    - service: light.turn_on
+      data:
+        entity_id:
+        - light.kitchen_cabinets
+        - light.kitchen_switch
+        brightness_pct: 100
+    
+    # Turn off air_purifier
+    - service: switch.turn_off
+      data:
+        entity_id:
+        - switch.air_purifier
+    
+    - delay:
+        seconds: 15
+    
+    - service: light.turn_on    
+      data:
+        entity_id:
+        - light.headboard
+        - light.underbed_leds
+        brightness_pct: 100
+        rgb_color: [255, 255, 255]
+    
+    - delay:
+        seconds: 10
+    
+    - service: light.turn_on    
+      data:
+        entity_id: light.bedroom_lamp
+        brightness_pct: 100
+        rgb_color: [255, 255, 255]
+        
+    - delay:
+        seconds: 5
+    
+    - service: light.turn_on    
+      data:
+        entity_id: light.cornice
+        brightness_pct: 100
+        rgb_color: [255, 255, 255]    
+        
+    - delay:
+        seconds: 10
+        
+    # Turn on Fan Light
+    - service: switch.turn_on
+      data:
+        entity_id: switch.bedroom_fan_light
+    
+    # Open Curtains if the Sun is up
+    - condition: template
+      value_template: "{{ state_attr('sun.sun','elevation') >= 5 }}" 
+      
+    - service: cover.open_cover
+      data:
+        entity_id: cover.bedroom_window_coverings
+
+
+###############################################################################
+## Script that is called by bedroom night script for adjusting bedroom lamp
+## color based on if electric blanket is on or not
+###############################################################################
+bedroom_lamp:
+  alias: Bedroom Lamp - Heated Blanket
+  sequence:
+    - service: scene.turn_on   
+      data_template:
+        entity_id: >
+          {%- if states('switch.heated_blanket') == 'on' -%}
+          scene.heated_blanket_on   
+          {%- else %}
+          scene.heated_blanket_off
+          {% endif %}
+          
+  
+  

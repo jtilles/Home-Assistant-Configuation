@@ -23,6 +23,9 @@
     entities:
       - group.master_bedroom
       - group.bedroom_lights
+      - group.attic
+      - group.master_bathroom
+      - group.laundry_room
   
   people_view:
     view: yes
@@ -44,6 +47,7 @@
       - group.ups
       - group.battery_levels
       - group.device_status
+      - group.bed_sensor_settings
   
   
 #### GROUPS  
@@ -53,10 +57,17 @@
     #icon: mdi:food
     control: hidden
     entities:
-      - switch.porch_switch
-      - sensor.front_door
+      - binary_sensor.front_door
       - light.kitchen_cabinets
       - light.kitchen_switch
+      - switch.porch_switch
+      - switch.exterior_garage_light
+      - binary_sensor.kitchen_sink_moisture
+      - switch.refrigerator_power
+      - sensor.refrigerator_daily_energy
+      - sensor.refrigerator_power
+      - binary_sensor.kitchen_window
+      
   
   living_room:
     name: Living Room
@@ -65,6 +76,7 @@
       - switch.living_room_lamp
       - light.living_room_fan_light
       - fan.living_room_fan
+      - binary_sensor.patio_door
       - switch.fireplace
       - sensor.fireplace_temperature
       - sensor.living_room_motion
@@ -85,9 +97,19 @@
   
   garage:
     name: Garage
+    control: hidden
     entities:
       - cover.garage_door_opener
-      - binary_sensor.garage_door
+      - binary_sensor.garage_house_door
+      - switch.garage_light
+      - sensor.garage_temperature
+      - sensor.garage_humidity
+      - sensor.garage_pressure
+      - sensor.garage_illuminance
+      - binary_sensor.garage_occupancy
+      - switch.garage_shelf_light
+      - switch.garage_door_shelf_light
+      
   
   bedroom_lights:
     name: Bedroom Lights
@@ -107,10 +129,44 @@
       - switch.bedroom_ceiling_fan_4
       - cover.bedroom_curtains
       - cover.bedroom_shades
+      - cover.bedroom_window_coverings
+      - sensor.bed_occupancy
       - sensor.master_bedroom_temperature
       - sensor.master_bedroom_humidity
       - sensor.master_bedroom_luminance
       - sensor.master_bedroom_motion
+      - sensor.master_bedroom_cube
+      
+  master_bathroom:
+    name: Master Bathroom
+    control: hidden
+    entities:  
+      - sensor.mstr_bath_temperature
+      - sensor.mstr_bath_pressure
+      - sensor.mstr_bath_humidity
+    
+  laundry_room:
+    name: Laundry Room
+    control: hidden
+    entities:
+      - switch.laundry_room_light
+      - binary_sensor.laundry_occupancy
+      - sensor.laundry_illuminance
+      - sensor.washing_machine_daily_energy
+      - sensor.washing_machine_power
+      - sensor.washing_machine_voltage
+      - sensor.washing_machine_current
+      - switch.washing_machine_power
+      - input_select.washing_machine_status
+      
+  attic:
+    name: Attic
+    control: hidden
+    entities:
+      - sensor.attic_temperature
+      - sensor.attic_humidity
+      - sensor.attic_pressure
+      
   
   christmas_lights:
     name: Christmas Lights
@@ -127,35 +183,11 @@
       - switch.office_lamp
       - sensor.office_motion
       - switch.office_closet
+      - sensor.office_humidity
+      - sensor.office_temperature
+      - sensor.office_pressure
   
-  weather:
-    name: Weather
-    entities:
-      - sun.sun
-      - sensor.moon
-      - sensor.weather_cloudiness
-      - sensor.weather_dewpoint_temperature
-      - sensor.weather_fog
-      - sensor.weather_high_clouds
-      - sensor.weather_humidity
-      - sensor.weather_low_clouds
-      - sensor.weather_medium_clouds
-      - sensor.weather_precipitation
-      - sensor.weather_pressure
-      - sensor.weather_symbol
-      - sensor.weather_temperature
-      - sensor.weather_wind_direction
-      - sensor.weather_wind_speed
-      - sensor.yw_day1_condition
-      - sensor.yw_day1_temperature_max
-      - sensor.yw_day1_temperature_min
-      - sensor.yw_day2_condition
-      - sensor.yw_day2_temperature_max
-      - sensor.yw_day2_temperature_min
-      - sensor.yw_day3_condition
-      - sensor.yw_day3_temperature_max
-      - sensor.yw_day3_temperature_min
-      
+ 
   homeAssistantServer:
     name: Home Assistant Server
     entities:
@@ -163,7 +195,7 @@
     - sensor.memory_free
     - sensor.memory_use
     - sensor.disk_use_percent_home
-    - sensor.since_last_boot
+    - sensor.last_boot
     - sensor.time_online
     - sensor.ssl_certificate_expiry
     
@@ -199,7 +231,7 @@
     - sensor.speedtest_download
     - sensor.speedtest_upload
     - sensor.joshillescom
-    - sensor.myipopendnscom
+    - sensor.myip
     
   sabnzbd:
     name: Sabnzbd
@@ -234,12 +266,22 @@
     - sensor.office_motion_battery
     - sensor.master_bedroom_motion_battery
     - sensor.staircase_multisensor_battery
+  
+  solar:
+    name: Solar
+    entities:
+    - sun.sun
+    - sensor.current_ozone_level
+    - sensor.current_uv_index
+    - sensor.max_uv_index
+    - sensor.skin_type_1_safe_exposure_time
+    - binary_sensor.protection_window
 
   josh:
     name: Josh
     entities:
     - sensor.josh_phone_battery
-    - device_tracker.joshua_josh_6p
+    - device_tracker.josh_pixel3
     - device_tracker.joshs_tablet
     
   sam:
@@ -252,6 +294,7 @@
     name: Networked Devices
     entities:
     - device_tracker.air_purifier
+    - device_tracker.bed_sensor
     - device_tracker.bedroom_echo
     - device_tracker.bedroom_gh
     - device_tracker.broadlink_rmpro
@@ -259,13 +302,24 @@
     - device_tracker.chromecastultra
     - device_tracker.cornice
     - device_tracker.driveway_camera
+    - device_tracker.electric_blanket
+    - device_tracker.fire_tablet
+    - device_tracker.fireplace
     - device_tracker.garage_door_opener
+    - device_tracker.garage_door_shelf
+    - device_tracker.garage_shelf
+    - device_tracker.garland
     - device_tracker.hassio
     - device_tracker.hd_homerun
     - device_tracker.illesds
     - device_tracker.josh_phone
+    - device_tracker.josh_pixel3
     - device_tracker.josh_printer
+    - device_tracker.josh_tablet
+    - device_tracker.josh_work_laptop
     - device_tracker.joshpc
+    - device_tracker.joshua_josh_pixel3
+    - device_tracker.kellieiphone
     - device_tracker.kevo_bridge
     - device_tracker.kitchen_cabinets
     - device_tracker.kitchengooglehome
@@ -280,9 +334,15 @@
     - device_tracker.office_closet
     - device_tracker.office_echo_dot
     - device_tracker.office_lamp
+    - device_tracker.outside_christmas_lights
     - device_tracker.porch_camera
+    - device_tracker.refridgerator
+    - device_tracker.rf_gateway
+    - device_tracker.router
     - device_tracker.samanthasipad
+    - device_tracker.sams_laptop
     - device_tracker.sams_phone
     - device_tracker.shield_tv
+    - device_tracker.washing_machine
     - device_tracker.wnr2000v5
     - device_tracker.yamaha_reciever

@@ -1,6 +1,15 @@
-  - platform: synology
-    url: !secret synology_ip_address
-    username: !secret synology_username
-    password: !secret synology_password
-    verify_ssl: False
-    timeout: 15
+  # - platform: synology
+    # url: !secret synology_ip_address
+    # username: !secret synology_username
+    # password: !secret synology_password
+    # verify_ssl: False
+    # timeout: 15
+  - platform: onvif
+    name: Porch Cam
+    host: 192.168.0.50
+    username: admin
+    password: admin
+    port: 1018
+    profile: 1
+    
+    

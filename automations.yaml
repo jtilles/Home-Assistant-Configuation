@@ -1,78 +1,72 @@
-# Prep the bedroom for sleep
+# Prep the bedroom for sleep on nights when we have work the next day
 - alias: Bedroom Nightime
+  initial_state: true
   trigger:
   - at: '21:45:00'
     platform: time
-    
+  condition:
+    condition: time
+    weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - sun  
   action:
-  - service: switch.turn_on
-    data:
-      entity_id: 
-      - switch.air_purifier
-  - service: light.turn_on
-    alias: Headboard LEDs
-    data:
-      brightness: '50'
-      entity_id: light.headboard
-      rgb_color:
-      - 163
-      - 27
-      - 205
-  - service: light.turn_on
-    alias: Underbed LEDs
-    data:
-      brightness: '122'
-      entity_id: light.underbed_leds
-      rgb_color:
-      - 205
-      - 27
-      - 86  
-  - service: light.turn_on
-    alias: Cornice
-    data:
-      brightness: '200'
-      entity_id: light.cornice
-      rgb_color:
-      - 0
-      - 153
-      - 0  
-  - service: switch.turn_off
-    alias: Turn Off Lamp
-    data:
-      entity_id:
-      - switch.living_room_lamp
-      - switch.fireplace
-  - service: cover.close_cover
-    data:
-      entity_id:
-      - cover.bedroom_curtains
-      - cover.bedroom_shades
-  - service: script.turn_on_bedroom_fan
+  - service: script.bedroom_nighttime
   
   
-# Turn off Air Purifier in the morning
+# At 7am, wake the room up, on the weekdays
 - alias: Bedroom Morning
+  initial_state: true
   trigger:
   - platform: time
-    at: '7:00:00'
-  
+    at: '7:00:00' 
+  condition:
+    condition: and
+    conditions:
+      - condition: time
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+      - condition: state
+        entity_id: sensor.bed_occupancy
+        state: 'Occupied'
   action:
-  - service: switch.turn_off
-    data:
-      entity_id: switch.air_purifier
+  - service: script.bedroom_morning
+  
+# Run the robot vaccum on Tuesday and Thursday @10am
+- alias: Consuela Clean House
+  initial_state: true
+  trigger:
+  - platform: time
+    at: '10:00:00'
+  condition:
+    condition: time
+    weekday:
+      - tue
+      - thu
+  action:
   - service: switch.turn_on
+    entity_id: switch.eufy_robovac
+  - service: notify.house_members
     data:
-      entity_id:
-        switch.bedroom_fan_off
+      message: "Consuela is hard at work making your house clean for you when you get home"
+      
+  
   
 # Turn on electric blanket at 9:30pm when it is less than 55°F outside
 - alias: Turn on Electric Blanket
+  initial_state: true
   trigger:
   - platform: time
     at: '21:30:00'
   condition:
     condition: template
-    value_template: '{{ states.weather.dark_sky.attributes.temperature < 55 }}'
+    value_template: '{{ states.weather.dark_sky.attributes.temperature < 60 }}'
   action:
   - service: switch.turn_on
     data:
@@ -80,6 +74,7 @@
       
 # Turn off electric blanket at 10:15
 - alias: Turn off Electric Blanket
+  initial_state: true
   trigger:
   - platform: time
     at: '22:15:00'
@@ -92,8 +87,9 @@
     data:
       entity_id: switch.heated_blanket
 
-# Turn on living room lamp 20 minutes before sunset   
+# Turn on living room lamp and close curtains 20 minutes before sunset   
 - alias: Lamp at Sunset
+  initial_state: true
   trigger:
   - event: sunset
     offset: -00:20:00
@@ -101,14 +97,23 @@
   action:
   - service: switch.turn_on
     data:
-      entity_id: switch.living_room_lamp
+      entity_id: 
+        - switch.living_room_lamp
+        - switch.outside_christmas_lights
+        - switch.christmas_tree
+        - switch.garland
   - service: light.turn_on
     data:
       entity_id: light.kitchen_cabinets
+  - service: cover.close_cover
+    data:
+      entity_id: cover.bedroom_window_coverings
+      
    
     
 # Turn off living_room_lamp and porch_switch at 10pm
 - alias: Turn off Lamp
+  initial_state: true
   trigger:
   - at: '22:00:00'
     platform: time
@@ -117,15 +122,26 @@
     data:
       entity_id:
       - switch.living_room_lamp
+      - switch.kitchen_switch
       - switch.porch_switch
+      - switch.exterior_garage_light
+      - switch.garage_shelf_light
+      - switch.garage_door_shelf_light
+      - switch.garage_light
+      - switch.christmas_tree
+      - switch.garland
+      - switch.outside_christmas_lights
+      - switch.fireplace
   - service: light.turn_off
     data:
       entity_id:
       - light.kitchen_cabinets
+      - light.kitchen_switch
   
 
 # On travel turn on    
 - alias: AWAY
+  initial_state: true
   trigger:
     platform: state
     entity_id: input_boolean.away
@@ -136,7 +152,7 @@
       entity_id:
       - automation.bedroom_morning
       - automation.bedroom_nightime
-      - automation.turn_on_blanket
+      - automation.turn_on_electric_blanket
       - automation.turn_on_porch_light_at_dusk
   - service: climate.set_away_mode
     data:
@@ -156,7 +172,7 @@
       entity_id:
       - automation.bedroom_morning
       - automation.bedroom_nightime
-      - automation.turn_on_blanket
+      - automation.turn_on_electric_blanket
       - automation.turn_on_porch_light_at_dusk
     
  
@@ -212,6 +228,8 @@
     entity_id: switch.office_closet
 
  # Turn on porch switch at dusk (15 minutes before sunset)
+ # If outside christmas lights are plugged in, turn them on instead of the
+ #    exterior garage light
 - alias: Turn on porch light at dusk
   trigger:
     - platform: sun
@@ -219,20 +237,28 @@
       offset: "-00:15:00"
   action:
     service: switch.turn_on
-    entity_id: switch.porch_switch
+    data_template:
+      entity_id: >
+        {% if is_state("switch.outside_christmas_lights","unavailable") %}
+          switch.exterior_garage_light, switch.porch_switch
+        {%- else -%}
+          switch.outside_christmas_lights, switch.porch_switch
+        {%- endif %}
     
     
- # Turn on porch switch at 9pm
-- alias: Turn off porch light at 9PM
+ # Turn off porch switch at 9:45pm
+- alias: Turn off porch light at 9:45PM
   trigger:
     - platform: time
-      at: '21:00:00'
+      at: '21:45:00'
   action:
     service: switch.turn_off
-    entity_id: switch.porch_switch
+    entity_id: 
+    - switch.porch_switch
+    - switch.exterior_garage_light
     
     
-# Turn on porch switch at sunrise if left on
+# Turn off porch switch at sunrise if left on
 - alias: Turn off porch light at sunrise
   trigger:
     - platform: sun
@@ -240,7 +266,9 @@
       offset: -00:02:00
   action:
     service: switch.turn_off
-    entity_id: switch.porch_switch    
+    entity_id: 
+    - switch.porch_switch    
+    - switch.exterior_garage_light
     
 # Adjust Flux color when flux lights turn on
 - alias: Adjust Flux Color
@@ -253,33 +281,39 @@
   action:
     service: switch.fluxer_update
     
-# Turn on porch light when front door opens and the sun isn't up
+# Turn on porch light when front door opens and the sun isn't up and christmas lights are not on
 - alias: Turn on Porch Light w/ Door
   trigger:
     - platform: state
-      entity_id: sensor.front_door
-      from: 'Door Closed'
-      to: 'Door Open'
+      entity_id: binary_sensor.front_door
+      from: 'off'
+      to: 'on'
   condition:
-    condition: or  
+    condition: and  
     conditions:
-      - condition: sun
-        after: sunset
-        after_offset: "00:20:00"
-      - condition: sun
-        before: sunrise
+      - condition: template
+        value_template: "{{  not is_state('switch.outside_christmas_lights', 'on') }}"
+      - condition: or
+        conditions:
+          - condition: sun
+            after: sunset
+            after_offset: "00:05:00"
+          - condition: sun
+            before: sunrise
   action:
     service: switch.turn_on
     entity_id:
       - switch.porch_switch
+      - switch.exterior_garage_light
+      - switch.living_room_lamp
       
-# Turn off porch light ten minutes after front door opens and the sun isn't up
+# Turn off porch light ten minutes after front door opens after 9:45PM and until 10 minutes after sunrise
 - alias: Turn off Porch Light after Door Close
   trigger:
     - platform: state
-      entity_id: sensor.front_door
-      from: 'Door Open'
-      to: 'Door Closed'
+      entity_id: binary_sensor.front_door
+      from: 'on'
+      to: 'off'
       for:
         minutes: 10
   condition:
@@ -289,123 +323,220 @@
         after: '21:45:00'
       - condition: sun
         before: sunrise
+        before_offset: "00:10:00" 
   action:
     service: switch.turn_off
     entity_id:
-      - switch.porch_switch    
+      - switch.porch_switch 
+      - switch.exterior_garage_light
+      - switch.living_room_lamp      
+      
+      
+# Turn on garage light when wither door opens, or motion is detected
+# between 5 minutes before sunset until sunrise
+- alias: Turn on Garage Light w/ Door
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.garage_house_door
+        - binary_sensor.garage_occupancy
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: cover.garage_door_opener
+      from: 'closed'
+      to: 'open'
+  condition:
+    condition: or  
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-00:05:00"
+      - condition: sun
+        before: sunrise
+  action:
+    service: switch.turn_on
+    entity_id:
+      - switch.garage_light
+      - switch.garage_shelf_light
+      - switch.garage_door_shelf_light
+      
+# Turn off garage light ten minutes after either garage door closes, or motion is no longer detected
+# between 5 minutes before sunset and 15 minutes after sunrise
+- alias: Turn off Garage Light after Door Close
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.garage_house_door
+        - binary_sensor.garage_occupancy
+      from: 'on'
+      to: 'off'
+      for:
+        minutes: 10
+    - platform: state
+      entity_id: cover.garage_door_opener
+      from: 'open'
+      to: 'closed'
+      for:
+        minutes: 10
+  condition:
+    condition: or  
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-00:05:00"
+      - condition: sun
+        before: sunrise
+        before_offset: "00:15:00"
+  action:
+    service: switch.turn_off
+    entity_id:
+      - switch.garage_light
+      - switch.garage_shelf_light
+      - switch.garage_door_shelf_light
 
 # Notify Josh when Sam gets home
 - alias: Message when Sam comes home
   trigger:
     - platform: state
-      entity_id: device_tracker.sam_iphone
+      entity_id: device_tracker.sams_phone
       #from: 'away'
       to: 'home'
+      for:
+        minutes: 10
   action:
     service: notify.josh_phone
     data:
       message: "Hey your girl just got home!!"
       
-    
-      
-    
-# Welcome Josh home
-# - alias: Google Home welcome Josh
-  # trigger:
-    # - platform: state
-      # entity_id:  sensor.front_door
-      # from: 'Door Closed'
-      # to: 'Door Open'
-  # condition:
-    
-
-      
- 
-# # syncing mi-light remote
-# - alias: MiLight Remote Cornice Sync
-  # trigger:
-    # - platform: mqtt
-      # topic: milight-update/0x6012/rgbw/2
-  # action:
-    # - service: mqtt.publish
-      # data_template:
-        # topic: "cmnd/sonoff-RGBCW/Power"
-        # payload_template: >-
-          # {% if trigger.payload_json.state is defined %}
-          # '{{ trigger.payload_json.state }}'
-          # {% endif %}  
-    # - service: mqtt.publish
-      # data_template:
-        # topic: "cmnd/sonoff-RGBCW/HsbColor"
-        # payload_template: >-
-          # {%- if trigger.payload_json.hue is defined -%}
-          # {{ trigger.payload_json.hue }},
-          # {%- else -%}
-          # {{ states.light.cornice.attributes.hs_color[0] }},
-          # {%- endif -%}100,
-          # {%- if trigger.payload_json.brightness is defined -%}
-          # {{ trigger.payload_json.brightness }}
-          # {%- else -%}
-          # {{ states.light.cornice.attributes.brightness }}
-          # {%- endif -%}
+# If moisture is detected beneath the sink
+- alias: Leaky Sink
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.kitchen_sink_moisture
+      to: 'on'
+  action:
+    - service: notify.house_members
+      data:
+        message: "Moisture detected underneath the sink!!! Quick action required!!"
+    - service: tts.google_say
+      entity_id:
+        - media_player.master_bedroom_speaker
+        - media_player.kitchen_speaker
+      data:
+        message: "The sink is leaking, please address immediately"
         
-       
+# Turn on Laundry room light with motion
+- alias: Laundry Light On
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.laundry_occupancy
+      to: 'on'
+  action:
+    service: switch.turn_on
+    entity_id: switch.laundry_room_light
       
-# # syncing mi-light remote with group
-# - alias: MiLight Remote Bedroom Group Sync
-  # trigger:
-  # - platform: mqtt
-    # topic: milight-update/0x6012/rgbw/0
-      
-  # action:
-  # - service: mqtt.publish
-    # data_template:
-      # topic: milight-update/0x6012/rgbw/1 
-      # payload_template: >-
-        # {"state":"
-        # {%- if trigger.payload_json.state is defined -%}
-        # {{ trigger.payload_json.state }}
-        # {%- endif -%}"}
-  # - service: mqtt.publish
-    # data_template:
-      # topic: milight-update/0x6012/rgbw/3 
-      # payload_template: >-
-        # {"state":"
-        # {%- if trigger.payload_json.state is defined -%}
-        # {{ trigger.payload_json.state }}
-        # {%- endif -%}"}
-  # - service: mqtt.publish
-    # data_template:
-      # topic: milight-update/0x6012/rgbw/4 
-      # payload_template: >-
-        # {"state":"
-        # {%- if trigger.payload_json.state is defined -%}
-        # {{ trigger.payload_json.state }}
-        # {%- endif -%}"}            
-  # - service: mqtt.publish
-    # data_template:
-      # topic: "cmnd/sonoff-RGBCW/Power"
-      # payload_template: >-
-        # {% if trigger.payload_json.state is defined %}
-        # '{{ trigger.payload_json.state }}'
-        # {% endif %}  
-  # - service: mqtt.publish
-    # data_template:
-      # topic: "cmnd/sonoff-RGBCW/HsbColor"
-      # payload_template: >-
-        # {%- if trigger.payload_json.hue is defined -%}
-        # {{ trigger.payload_json.hue }},
-        # {%- else -%}
-        # {{ states.light.cornice.attributes.hs_color[0] }},
-        # {%- endif -%}100,
-        # {%- if trigger.payload_json.brightness is defined -%}
-        # {{ trigger.payload_json.brightness }}
-        # {%- else -%}
-        # {{ states.light.cornice.attributes.brightness }}
-        # {%- endif -%}  
-   
-   
+# Turn off Laundry room light with motion
+- alias: Laundry Light Off
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.laundry_occupancy
+      to: 'off'
+      for:
+        minutes: 10
+  action:
+    service: switch.turn_off
+    entity_id: switch.laundry_room_light
+    
+# Refrigerator is off, attempt to turn back on
+- alias: Fridge looses power
+  trigger:
+    - platform: state
+      entity_id: switch.refrigerator_power
+      to: 'off'
+      for:
+        minutes: 15
+    - platform: state
+      entity_id: switch.refrigerator_power
+      to: 'unavailable'
+      for:
+        minutes: 15
+    # - platform: state
+      # entity_id: device_tracker.refridgerator  
+      # to: 'not_home'
+      # for:
+        # minutes: 10
+  action:
+    - service: switch.turn_on
+      entity_id: switch.refrigerator_power
+    - service: notify.house_members
+      data:
+        message: "Refrigerator has lost power, act quickly to save food!"  
+    - service: tts.google_say
+      entity_id:
+        - media_player.master_bedroom_speaker
+        - media_player.kitchen_speaker    
+      data:
+        message: "The refridgerator has lost power!"
+        
+    
 
+   
+# Playing Movies
+- alias: Play Movies
+  trigger:
+    - platform: state
+      entity_id: media_player.plex_shield_android_tv
+      from: 'paused'
+      to: 'playing'
+  condition:
+    - condition: state
+      entity_id: sun.sun
+      state: 'below_horizon'
+  action:
+    - service: switch.turn_off
+      entity_id: 
+        - switch.living_room_lamp
+        - switch.fluxer
+    - service: light.turn_on
+      data:
+        brightness_pct: 5
+        kelvin: 2000
+        entity_id: 
+          - light.kitchen_switch
+          - light.kitchen_cabinets
+ 
+- alias: Pause Movies
+  trigger:
+    - platform: state
+      entity_id: media_player.plex_shield_android_tv
+      from: 'playing'
+      to: 'paused'
+  condition:
+    - condition: state
+      entity_id: sun.sun
+      state: 'below_horizon'
+  action:
+    - service: switch.turn_on
+      entity_id: 
+        - switch.living_room_lamp
+    - service: light.turn_on
+      data:
+        brightness_pct: 100
+        kelvin: 2000
+        entity_id: 
+          - light.kitchen_switch
+          - light.kitchen_cabinets
+ 
+- alias: Movie Stop
+  trigger:
+    - platform: state
+      entity_id: media_player.plex_shield_android_tv
+      to: 'idle'
+  action:
+    service: switch.turn_on
+    entity_id:
+      - switch.fluxer
   
 # When HA starts
 - alias: HASS Startup
@@ -414,7 +545,11 @@
     event: start
   action:
   - service: switch.turn_on
-    entity_id: switch.fluxer
+    entity_id:
+      - switch.fluxer
+      - switch.refrigerator_power
+      - switch.washing_machine_power
+
     
     
 # Security when away
@@ -426,18 +561,188 @@
       - sensor.office_motion
       to: 'Motion'
     - platform: state
-      entity_id: sensor.front_door
-      to: 'Door Open'
+      entity_id: 
+      - binary_sensor.front_door
+      - binary_sensor.garage_house_door
+      - binary_sensor.patio_door
+      - binary_sensor.kitchen_window
+      to: 'on'
     - platform: state
       entity_id: cover.garage_door_opener
-      to: 'opened'
-      
+      to: 'opened'  
   condition:
     - condition: state
       entity_id: input_boolean.away
       state: 'on'
   action:
-    - service: notify.josh_phone
+    - service: notify.house_members
       data_template:
         message: 'ALERT!!! {{trigger.entity_id}} went from {{trigger.from_state.state}} to {{trigger.to_state.state}}'
   
+  
+ # Bedroom Cube Turn off light
+- alias: bedroom cube off
+  trigger:
+    - platform: template
+      value_template: "{{ is_state_attr('sensor.master_bedroom_cube','from_side', 0) }}" 
+      # entity_id: sensor.master_bedroom_cube.attributes.from_side
+      # from: '0'
+  action:
+    - service: light.turn_off
+      entity_id: group.bedroom_lights
+      
+ # Bedroom Cube Turn on light
+- alias: bedroom cube on
+  trigger:
+    - platform: template
+      value_template: "{{ is_state_attr('sensor.master_bedroom_cube','to_side', 0) }}" 
+      # entity_id: sensor.master_bedroom_cube.attributes.from_side
+      # from: '0'
+  action:
+    - service: light.turn_on
+      entity_id: group.bedroom_lights      
+
+
+# Syncs the shelf lights with the garage overhead light      
+- alias: Sync Garage Lights
+  trigger:
+    - platform: state
+      entity_id: switch.garage_light
+  action:
+    service_template: >
+      switch.turn_{{ 'on' if trigger.to_state.state == 'on' else 'off'}}
+    data:
+      entity_id: 
+        - switch.garage_shelf_light
+        - switch.garage_door_shelf_light
+      
+# Turns off lights when you get into bed after 9pm and before 7am
+- alias: Turn lights off when in bed
+  trigger:
+    - platform: state
+      entity_id: input_select.bed_occupancy
+      to: 'Sam & Josh'
+      for:
+        seconds: 10
+  condition:
+    - condition: time
+      after: '21:00:00'
+      before: '7:00:00'    
+  action:
+    - service: light.turn_off
+      data:
+        entity_id: light.bedroom_lights
+
+# Turn on red underbed lights when getting out of bed after 10pm and before 7am
+- alias: Turn on bed night lights
+  trigger:
+    - platform: state
+      entity_id: sensor.bed_occupancy
+      from: 'Sam & Josh'
+  condition:
+    - condition: time
+      after: '22:00:00'
+      before: '7:00:00'      
+  action:
+    - service: light.turn_on
+      data:
+        entity_id: light.underbed_leds
+        brightness_pct: 15
+        rgb_color: [255, 0, 0]
+
+# Turn off night light 10 minutes after it turned on, if hasn't turned off already        
+- alias: Turn off bed night lights
+  trigger:
+    - platform: state
+      entity_id: light.underbed_leds
+      to: 'on'
+      for:
+        minutes: 10
+  condition:
+    condition: and
+    conditions:
+      - condition: time
+        after: '22:00:00'
+        before: '7:00:00'  
+      - condition: template
+        value_template: "{{ state_attr('light.underbed_leds', 'brightness') < 40 }}"
+  action:
+    - service: light.turn_on
+      data:
+        entity_id: light.underbed_leds
+        brightness_pct: 15
+        rgb_color: [255, 0, 0]        
+        
+# Say message when door is left open
+- alias: Door Left Open
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.front_door
+      to: 'on'
+      for:
+        minutes: 5
+        seconds: 1
+    - platform: state
+      entity_id: binary_sensor.patio_door
+      to: 'on'
+      for:
+        minutes: 2  
+        seconds: 1
+    - platform: state
+      entity_id: binary_sensor.garage_house_door
+      to: 'on'
+      for:
+        minutes: 5
+        seconds: 1
+    - platform: state
+      entity_id: binary_sensor.kitchen_window
+      to: 'on'
+      for:
+        seconds: 30
+  condition:
+    condition: template
+    value_template: "{{ states('climate.hallway') != 'off' }}" 
+  action:
+    - service: media_player.volume_set
+      data:
+        entity_id:
+          - media_player.master_bedroom_speaker
+          - media_player.kitchen_speaker
+        volume_level: 0.6
+    - service: notify.josh_phone
+      data_template:
+        message: >
+          Hey dumbass, you left the
+          {% if trigger.entity_id == 'binary_sensor.front_door' -%}
+          FRONT DOOR 
+          {% elif trigger.entity_id == 'binary_sensor.garage_house_door' -%}
+          GARAGE DOOR 
+          {% elif trigger.entity_id == 'binary_sensor.patio_door' -%}
+          PATIO DOOR 
+          {% elif trigger.entity_id == 'binary_sensor.kitchen_window' -%}
+          KITCHEN WINDOW 
+          {% endif -%}
+          open, HVAC isn't free! I am turning the HVAC off!
+    - service: tts.google_say
+      entity_id:
+        - media_player.master_bedroom_speaker
+        - media_player.kitchen_speaker    
+      data_template:
+        message: >
+          Hey dumbass, you left the
+          {% if trigger.entity_id == 'binary_sensor.front_door' -%}
+          FRONT DOOR 
+          {% elif trigger.entity_id == 'binary_sensor.garage_house_door' -%}
+          GARAGE DOOR 
+          {% elif trigger.entity_id == 'binary_sensor.patio_door' -%}
+          PATIO DOOR 
+          {% elif trigger.entity_id == 'binary_sensor.kitchen_window' -%}
+          KITCHEN WINDOW 
+          {% endif -%}
+          open, HVAC isn't free!  I am turning the HVAC off!
+    
+    - service: climate.set_operation_mode
+      data:
+        operation_mode: 'off'
+        entity_id:
+        - climate.hallway

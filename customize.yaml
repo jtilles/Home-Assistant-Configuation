@@ -23,8 +23,8 @@
   group.bedroom_lights:
     icon: mdi:lightbulb
   
-  group.christmas_lights:
-    hidden: true
+  #group.christmas_lights:
+    #hidden: true
     
   group.master_bedroom:
     emulated_hue_name: "Master Bedroom"
@@ -91,28 +91,34 @@
   binary_sensor.motion_detector_sensor:
     hidden: true
     
-  sensor.front_door_access_control:
+  binary_sensor.kitchen_window_2:
+    device_class: window
+  
+  sensor.front_door_access_control2:
     hidden: true
     
-  sensor.front_door_alarm_level:
+  sensor.front_door_alarm_level2:
     hidden: true
     
-  sensor.front_door_alarm_type:
+  sensor.front_door_alarm_type2:
     hidden: true
     
-  sensor.front_door_burglar:
+  sensor.front_door_burglar2:
     hidden: true
     
-  sensor.front_door_sourcenodeid:
+  sensor.front_door_sourcenodeid2:
     hidden: true
     
   #zwave.front_door:
   #  hidden: true
   
-  binary_sensor.front_door_sensor:
+  binary_sensor.front_door_sensor2:
     hidden: true  
     
   binary_sensor.living_room_sensor:
+    hidden: true
+  
+  binary_sensor.openmqttgateway:
     hidden: true
     
   sensor.living_room_appliance:
@@ -167,6 +173,14 @@
     hidden: true
   sensor.living_room_multisensor_system:
     hidden: true
+  sensor.living_room_multisensor_clock:
+    hidden: true
+  sensor.living_room_multisensor_homehealth:
+    hidden: true
+  sensor.living_room_multisensor_power:
+    hidden: true
+  sensor.vision_zp3111_multisensor_4in1_homehealth_3:
+    hidden: true
     
   binary_sensor.bedroom_multisensor_sensor:
     hidden: true
@@ -195,6 +209,10 @@
     hidden: true
   sensor.staircase_multisensor_sourcenodeid:
     hidden: true
+  
+  sensor.bedroom_multisensor_power:
+    hidden: true
+    
   
   
 ##########################################
