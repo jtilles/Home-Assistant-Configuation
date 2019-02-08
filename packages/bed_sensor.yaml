@@ -1,0 +1,145 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   12/26/2018
+#   @package        :   bed_sensor.yaml
+#   @description    :   Package that houses the bed sensor in the master bedroom/bed.
+#                       Bed is a giant scale utilizing 4x load cells + HX711 module
+#                       Code on NodeMCU is from @selfhostedhome
+#                       (https://github.com/selfhostedhome/smart-bed-sensor)
+#   @url            :   
+###############################################################################
+homeassistant:
+  customize:
+
+group:
+  bed_sensor_settings:
+    name: "Bed Sensor Settings"
+    control: hidden
+    entities:
+    - input_number.raw_bed
+    - input_number.josh_bed
+    - input_number.sam_bed
+    - input_number.bed_tolerance
+    - input_select.bed_occupancy
+    - sensor.raw_bed_weight
+    
+
+input_number:
+  raw_bed:
+    name: Raw Bed Weight
+    min: 0
+    max: 3000000
+    mode: box
+    icon: mdi:bed-empty
+  
+  josh_bed:
+    name: Josh Weight in Bed
+    min: 0
+    max: 6000000
+    mode: box
+    icon: mdi:hotel
+  
+  sam_bed:
+    name: Sam Weight in Bed
+    min: 0
+    max: 6000000
+    mode: box
+    icon: mdi:hotel
+  
+  bed_tolerance:
+    name: Bed Tolerance
+    min: 0
+    max: 5000000
+    mode: box
+    icon: mdi:hotel
+  
+
+input_select:
+  bed_occupancy:
+    name: Bed Occupancy
+    options:
+    - Empty
+    - Samantha
+    - Josh
+    - Sam & Josh
+    - Unknown
+    icon: mdi:hotel
+
+sensor:
+  - platform: mqtt
+    name: "Raw Bed Weight"
+    state_topic: "home/bedroom/bed"
+    #value_template: '{{ value_json["HX711"]["Weight"] }}'
+    #availability_topic: "home/bedroom/bed/available"
+    payload_available: 'online'
+    payload_not_available: 'offline'
+    #unit_of_measurement: 'kg'
+  
+  - platform: template
+    sensors:
+      bed_occupancy:
+        friendly_name: "Bed Occupancy"
+        value_template: >
+          {% if states('input_select.bed_occupancy') == 'Empty' %}
+            Empty
+          {% else %}
+            Occupied
+          {% endif %}
+        icon_template: >
+          {% if states('input_select.bed_occupancy') == 'Empty' %}
+            mdi:bed-empty
+          {% else %}
+            mdi:hotel
+          {% endif %}
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  - alias: Bed Sensor State Machine
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.raw_bed_weight
+    action:
+      - service: input_select.select_option
+        data_template:
+          entity_id: input_select.bed_occupancy
+          option: >
+            {% if states('sensor.raw_bed_weight') | int < (states('input_number.raw_bed') | int + 2*(states('input_number.bed_tolerance') | int)) %}
+              Empty
+            {% elif (states('sensor.raw_bed_weight') | int < (states('input_number.sam_bed') | int + (states('input_number.bed_tolerance') | int))) 
+              and ((states('sensor.raw_bed_weight') | int ) > (states('input_number.sam_bed') | int - (states('input_number.bed_tolerance') | int))) 
+            %}
+              Samantha
+            {% elif (states('sensor.raw_bed_weight') | int < (states('input_number.josh_bed') | int + (states('input_number.bed_tolerance') | int))) 
+              and (states('sensor.raw_bed_weight') | int > (states('input_number.josh_bed') | int - (states('input_number.bed_tolerance') | int))) 
+            %}
+              Josh
+            {% elif (states('sensor.raw_bed_weight') | int >  
+              (
+                ((states('input_number.sam_bed')|int) - (states('input_number.raw_bed')|int)) +
+                ((states('input_number.josh_bed')|int) - (states('input_number.raw_bed')|int)) +
+                (states('input_number.raw_bed')|int) - (states('input_number.bed_tolerance') | int)
+              )
+            )          
+            %}  
+              Sam & Josh
+            {% else %}
+              Unknown
+            {% endif %}
+  
+  # When the bed is empty, update the new empty value
+  - alias: Bed Sensor - Update Empty Bed Weight
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: input_select.bed_occupancy
+        to: 'Empty'
+        for:
+          minutes: 30
+    action:
+      - service: input_number.set_value
+        data_template:
+          entity_id: input_number.raw_bed
+          value: "{{ states('sensor.raw_bed_weight') | int }}"

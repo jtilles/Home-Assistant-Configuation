@@ -1,0 +1,149 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   01/10/2019
+#   @package        :   
+#   @description    :   
+#   @url            :   
+###############################################################################
+homeassistant:
+#customize:
+
+group:
+  dishwasher:
+      name: "Dishwasher"
+      control: hidden
+      entities:
+      - sensor.dishwasher_current
+      - sensor.dishwasher_daily_energy
+      - sensor.dishwasher_power
+      - sensor.dishwasher_voltage
+      - switch.dishwasher_power
+      - input_select.dishwasher_status
+
+input_select:
+  dishwasher_status:
+    name: Dishwasher Status
+    options:
+      - Idle
+      - Running
+      - Clean
+    initial: Idle  
+
+sensor:
+# Sonoff Pow2 Connected to Dishwasher
+  - platform: mqtt
+    name: "Dishwasher Daily Energy"
+    state_topic: "tele/kitchen/dishwasher/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Today"] }}'
+    unit_of_measurement: "kWh"
+  - platform: mqtt
+    name: "Dishwasher Power"
+    state_topic: "tele/kitchen/dishwasher/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Power"] }}'
+    unit_of_measurement: "W"  
+  - platform: mqtt
+    name: "Dishwasher Voltage"
+    state_topic: "tele/kitchen/dishwasher/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Voltage"] }}'
+    unit_of_measurement: "V"
+  - platform: mqtt
+    name: "Dishwasher Current"
+    state_topic: "tele/kitchen/dishwasher/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Current"] }}'
+    unit_of_measurement: "A"   
+
+switch:
+  - platform: mqtt
+    name: Dishwasher Power
+    command_topic: "cmnd/kitchen/dishwasher/POWER"
+    availability_topic: "tele/kitchen/dishwasher/LWT"
+    state_topic: "stat/kitchen/dishwasher/POWER"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+# Sets Dishwasher to Running after power increases past 20W from idle
+  - alias: Set Washing Machine to Running
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.dishwasher_power
+        above: 20
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: input_select.dishwasher_status
+          state: Idle
+        - condition: state
+          entity_id: input_select.dishwasher_status
+          state: Clean  
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.dishwasher_status
+          option: Running
+         
+          
+# Sets Washing Machine status to clean after power drops below 15W for 5 minutes
+  - alias: Set Dishwasher to Clean
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.dishwasher_power
+        below: 15
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: input_select.dishwasher_status
+        state: Running
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.dishwasher_status
+          option: Clean
+  
+# Sets waching machine to idle after a timeout of 1 hour   
+  - alias: Set Dishwasher to Idle
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.dishwasher_power
+        below: 25
+        for:
+          minutes: 60
+    condition:
+      - condition: state
+        entity_id: input_select.dishwasher_status
+        state: Clean
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.dishwasher_status
+          option: Idle
+          
+ # Notify Josh's phone when washing machine is completed
+  - alias: Dishwasher is clean, send alert
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: input_select.dishwasher_status
+        to: Clean
+          
+    action:
+      - service: notify.house_members
+        data:
+          message: "The dishwasher is now clean, please empty it when convenient!"  
+      - service: tts.google_say
+        entity_id:
+          - media_player.master_bedroom_speaker
+          - media_player.garage_speaker
+          - media_player.gh_home_hub   
+        data:
+          message: "The dishwasher is now clean, please empty it when convenient!"

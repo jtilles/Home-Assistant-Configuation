@@ -1,0 +1,140 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   08/18/2018
+#   @package        :   
+#   @description    :   
+#   @url            :   
+###############################################################################
+homeassistant:
+#customize:
+
+#group:
+
+
+input_select:
+  washing_machine_status:
+    name: Washing Machine Status
+    options:
+      - Idle
+      - Running
+      - Clean
+    initial: Idle  
+
+sensor:
+# Sonoff Pow2 Connected to Washing Machine
+  - platform: mqtt
+    name: "Washing Machine Daily Energy"
+    state_topic: "tele/sonoff-POW2/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Today"] }}'
+    unit_of_measurement: "kWh"
+  - platform: mqtt
+    name: "Washing Machine Power"
+    state_topic: "tele/sonoff-POW2/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Power"] }}'
+    unit_of_measurement: "W"  
+  - platform: mqtt
+    name: "Washing Machine Voltage"
+    state_topic: "tele/sonoff-POW2/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Voltage"] }}'
+    unit_of_measurement: "V"
+  - platform: mqtt
+    name: "Washing Machine Current"
+    state_topic: "tele/sonoff-POW2/SENSOR"
+    value_template: '{{ value_json["ENERGY"]["Current"] }}'
+    unit_of_measurement: "A"   
+
+switch:
+  - platform: mqtt
+    name: Washing Machine Power
+    command_topic: "cmnd/sonoff-POW2/POWER"
+    availability_topic: "tele/sonoff-POW2/LWT"
+    state_topic: "stat/sonoff-POW2/POWER"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+# Sets Washing Machine to Running after power increases past 25W from idle
+  - alias: Set Washing Machine to Running
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.washing_machine_power
+        above: 20
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: input_select.washing_machine_status
+          state: Idle
+        - condition: state
+          entity_id: input_select.washing_machine_status
+          state: Clean  
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.washing_machine_status
+          option: Running
+          
+# Sets Washing Machine status to clean after power drops below 25W for 10 minutes
+  - alias: Set Washing Machine to Clean
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.washing_machine_power
+        below: 25
+        for:
+          minutes: 10
+    condition:
+      - condition: state
+        entity_id: input_select.washing_machine_status
+        state: Running
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.washing_machine_status
+          option: Clean
+  
+# Sets waching machine to idle after a timeout of 1 hour   
+  - alias: Set Washing Machine to Idle
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.washing_machine_power
+        below: 25
+        for:
+          minutes: 60
+    condition:
+      - condition: state
+        entity_id: input_select.washing_machine_status
+        state: Clean
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.washing_machine_status
+          option: Idle
+          
+ # Notify Josh's phone when washing machine is completed
+  - alias: Washing Machine is clean, send alert
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: input_select.washing_machine_status
+        to: Clean
+          
+    action:
+      - service: switch.turn_on
+        entity_id: switch.refrigerator_power
+      - service: notify.house_members
+        data:
+          message: "The washing machine is now clean, please remove clothes!"  
+      - service: tts.google_say
+        entity_id:
+          - media_player.master_bedroom_speaker
+          - media_player.gh_home_hub    
+        data:
+          message: "The washing machine is now clean, please remove clothes!"
