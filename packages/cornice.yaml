@@ -161,24 +161,51 @@ automation:
         {% endif %}
       data:
         entity_id: light.cornice
+  
+# Turn on cornice with motion when dark, before 9:50pm and bed is empty  
+  - alias: Turn on Cornice with motion in bedroom
+    initial_state: True
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_motion
+        to: 'Motion'
+    condition:
+      condition: and
+      conditions:
+        - condition: sun
+          after: sunset
+          after_offset: "-00:15:00"
+        - condition: time
+          before: '21:50:00'
+        - condition: state
+          entity_id: 'sensor.bed_occupancy'
+          state: 'Empty'
+    action:
+      service: light.turn_on
+      data:
+        entity_id: light.cornice
         
-      # light.turn_{{ 'on' if trigger.payload_json.state == 'ON' else 'off' }}
-      # data_template:
-        # entity_id: light.cornice
-        # rgb_color: >- 
-          # [{{ trigger.payload_json.color.r }},{{ trigger.payload_json.color.g }},{{ trigger.payload_json.color.b }}]
         
+  # Turn off cornice with no motion when dark, before 9:45pm
+  - alias: Turn off Cornice with no motion in bedroom
+    initial_state: True
+    trigger:
+    - platform: state
+      entity_id: sensor.master_bedroom_motion
+      to: 'No Motion'
+      for:
+        minutes: 15
+    condition:
+      condition: and
+      conditions:
+        - condition: sun
+          after: sunset
+          after_offset: "-00:15:00"
+        - condition: time
+          before: '21:45:00'
+    action:
+      service: light.turn_off
+      data:
+        entity_id: light.cornice      
         
-        # data: 
-            # entity_id: light.cornice 
-            # rgb_color_template: '[{{ trigger.payload_json.color.r|int,trigger.payload_json.color.g|int,trigger.payload_json.color.b|int }}]' #}
-        
-        # - '{{ trigger.payload_json.color.r }}'
-        # - '{{ trigger.payload_json.color.g }}'
-        # - '{{ trigger.payload_json.color.b }}'
-        # topic: "milight/commands/0x6013/rgbw/{{ trigger.topic.split('/')[4] }}"
-        # payload_template: >
-          # {{ trigger.payload }}
-
-          
-         # trigger.payload_json.state
+ 

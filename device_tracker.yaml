@@ -30,10 +30,10 @@
     # cabin: home
     # office: work
     
-- platform: nmap_tracker
-  hosts: 192.168.0.0-255
-  consider_home: 120
-  new_device_defaults:
-    track_new_devices: True
-    hide_if_away: False
+# - platform: nmap_tracker
+  # hosts: 192.168.0.0-255
+  # consider_home: 120
+  # new_device_defaults:
+    # track_new_devices: True
+    # hide_if_away: False
   

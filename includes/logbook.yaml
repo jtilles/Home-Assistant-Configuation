@@ -19,6 +19,7 @@ include:
     - sensor.living_room_motion
     - sensor.ups_input_voltage
     - sensor.ups_status
+    - switch.fireplace
   
   
   domains:

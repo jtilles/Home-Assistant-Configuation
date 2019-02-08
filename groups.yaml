@@ -127,6 +127,7 @@
       - switch.air_purifier
       - group.bedroom_lights
       - switch.bedroom_ceiling_fan_4
+      - switch.josh_s_closet
       - cover.bedroom_curtains
       - cover.bedroom_shades
       - cover.bedroom_window_coverings
@@ -186,6 +187,8 @@
       - sensor.office_humidity
       - sensor.office_temperature
       - sensor.office_pressure
+      - binary_sensor.office_closet_occupancy
+      - sensor.office_closet_illuminance
   
  
   homeAssistantServer:
@@ -230,7 +233,7 @@
     - sensor.speedtest_ping
     - sensor.speedtest_download
     - sensor.speedtest_upload
-    - sensor.joshillescom
+    - sensor.joshilles_com
     - sensor.myip
     
   sabnzbd:
@@ -266,6 +269,8 @@
     - sensor.office_motion_battery
     - sensor.master_bedroom_motion_battery
     - sensor.staircase_multisensor_battery
+    - sensor.kitchen_window_battery
+    - sensor.garage_house_door_battery
   
   solar:
     name: Solar
@@ -301,6 +306,7 @@
     - device_tracker.christmas_tree
     - device_tracker.chromecastultra
     - device_tracker.cornice
+    - device_tracker.dishwasher
     - device_tracker.driveway_camera
     - device_tracker.electric_blanket
     - device_tracker.fire_tablet
@@ -309,6 +315,8 @@
     - device_tracker.garage_door_shelf
     - device_tracker.garage_shelf
     - device_tracker.garland
+    - device_tracker.gh_garage_mini
+    - device_tracker.gh_home_hub
     - device_tracker.hassio
     - device_tracker.hd_homerun
     - device_tracker.illesds

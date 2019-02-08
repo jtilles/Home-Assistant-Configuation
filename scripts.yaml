@@ -85,12 +85,12 @@ bedroom_nighttime:
     - service: media_player.volume_set
       data_template:
         entity_id:
-          - media_player.kitchen_speaker
+          - media_player.gh_home_hub
         volume_level: 0.7
         
     - service: tts.google_say
       entity_id:
-        - media_player.kitchen_speaker
+        - media_player.gh_home_hub
       data_template: 
         message: >
           {{ [

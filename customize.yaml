@@ -148,6 +148,9 @@
   sensor.living_room_power_management:
     hidden: true
     
+  sensor.outside_temp:
+    hidden: true
+    
   sensor.living_room_luminance:
     icon: mdi:weather-sunny
     friendly_name: Living Room Light

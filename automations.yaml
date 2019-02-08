@@ -185,7 +185,7 @@
   trigger:
     - platform: state
       entity_id: sensor.office_motion
-      to: Motion
+      to: 'Motion'
   condition:
     condition: or
     conditions:
@@ -198,7 +198,6 @@
   action:
     service: switch.turn_on
     entity_id: switch.office_lamp
-    
     
 # Turn off office lights 15 minutes after motion stops
 - alias: Turn off Office Light w/o Motion
@@ -213,6 +212,28 @@
     entity_id: 
     - switch.office_lamp
     - switch.office_closet
+    
+#  Turn on office closet light with motion
+- alias: Turn on Office Closet Light w/ Motion
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.office_closet_occupancy
+      to: 'on'
+  action:
+    service: switch.turn_on
+    entity_id: switch.office_closet 
+    
+#  Turn off office closet light with no motion for 20 minutes
+- alias: Turn off Office Closet Light w/o Motion
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.office_closet_occupancy
+      to: 'off'
+      for:
+        minutes: 20
+  action:
+    service: switch.turn_off
+    entity_id: switch.office_closet         
 
 # Turn off office closet after 30 minutes of being left on    
 - alias: Turn off Office Closet
@@ -423,6 +444,9 @@
       entity_id:
         - media_player.master_bedroom_speaker
         - media_player.kitchen_speaker
+        - media_player.garage_speaker
+        - media_player.gh_home_hub
+        
       data:
         message: "The sink is leaking, please address immediately"
         
@@ -701,13 +725,15 @@
         seconds: 30
   condition:
     condition: template
-    value_template: "{{ states('climate.hallway') != 'off' }}" 
+    value_template: "{{ not(states('climate.hallway') == 'eco' or states('climate.hallway') == 'off') }}" 
   action:
     - service: media_player.volume_set
       data:
         entity_id:
           - media_player.master_bedroom_speaker
           - media_player.kitchen_speaker
+          - media_player.gh_home_hub
+          - media_player.garage_speaker
         volume_level: 0.6
     - service: notify.josh_phone
       data_template:
@@ -726,7 +752,9 @@
     - service: tts.google_say
       entity_id:
         - media_player.master_bedroom_speaker
-        - media_player.kitchen_speaker    
+        - media_player.kitchen_speaker   
+        - media_player.gh_home_hub
+        - media_player.garage_speaker
       data_template:
         message: >
           Hey dumbass, you left the
@@ -743,6 +771,33 @@
     
     - service: climate.set_operation_mode
       data:
-        operation_mode: 'off'
+        operation_mode: 'eco'
         entity_id:
         - climate.hallway
+        
+        
+- alias: Play random audio clip
+  initial_state: true
+  trigger: 
+    - platform: state
+      entity_id: light.kitchen_switch
+      to: 'on'
+  action:
+    - service: media_player.play_media
+      data_template:
+        entity_id: media_player.gh_home_hub
+        media_content_type: 'audio/wav'
+        media_content_id: >
+          https://hass.joshilles.com/local/audio/
+          {{- [
+            "silence_lambs_liver.wav",
+            "silence_lambs_lotion.wav",
+            "silence_lambs_hose.wav",
+            "t1_be_back.wav",
+            "t1_terminated.wav",
+            "t2_hasta_la_vista.wav",
+            "t3_postponed.wav",
+            "christmas_vacation_no_good.wav",
+            "bushw_eavesdropping1.wav"
+          ] | random
+          }}      
