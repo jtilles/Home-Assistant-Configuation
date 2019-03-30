@@ -1,0 +1,29 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/10/2019
+#   @package        :   fitbit.yaml
+#   @description    :   Add fitbit data to be tracked 
+#   @url            :   
+###############################################################################
+sensor:
+  - platform: fitbit
+    clock_format: 12H
+    monitored_resources:
+      - activities/caloriesBMR
+      - activities/distance
+      - activities/elevation
+      - activities/floors
+      - activities/heart
+      - devices/battery
+      - sleep/awakeningsCount
+      - sleep/efficiency
+      - sleep/minutesAfterWakeup
+      - sleep/minutesAsleep
+      - sleep/minutesAwake
+      - sleep/minutesToFallAsleep
+      - sleep/startTime
+      - sleep/timeInBed
+###############################################################################
+#                               Automations
+###############################################################################
+#automation:

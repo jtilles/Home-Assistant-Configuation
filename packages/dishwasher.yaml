@@ -98,7 +98,7 @@ automation:
         entity_id: sensor.dishwasher_power
         below: 15
         for:
-          minutes: 5
+          minutes: 10
     condition:
       - condition: state
         entity_id: input_select.dishwasher_status

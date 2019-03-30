@@ -1,0 +1,86 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/16/2019
+#   @package        :   candle.yaml
+#   @description    :   Contains scripts and pseudo components associated with
+#                       IR candles controlled by Broadlink RM hub
+#   @url            :   
+###############################################################################
+light: 
+  - platform: template
+    lights:
+      candles:
+        friendly_name: "Candles"
+        turn_on:
+          service: script.turn_on_candles
+        turn_off:
+          service: script.turn_off_candles
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  # Turn on candles at 8:00  
+  - alias: Candles at 8pm
+    initial_state: true
+    trigger:
+    - platform: time
+      at: '20:00:00'
+    action:
+    - service: light.turn_on
+      data:
+        entity_id: light.candles
+    
+    
+script:
+  ###############################################################################
+  ## Script that is called to turn on IR candles      
+  ###############################################################################
+  turn_on_candles:
+    alias: Turn on candles
+    sequence:
+      - service: switch.turn_on
+        data:
+          entity_id: switch.candles_raw
+      - delay:
+          milliseconds: 250
+      - service: switch.turn_on
+        data:
+          entity_id: switch.candles_raw
+      - delay:
+          milliseconds: 250
+      # Turns the candles on for 4hr max
+      - service: switch.turn_off
+        data:
+          entity_id: switch.candle_2h_4h
+      - delay:
+          milliseconds: 250
+      - service: switch.turn_off
+        data:
+          entity_id: switch.candle_2h_4h
+      - delay:
+          seconds: 2
+      # Sets candles to flicker vs stay on    
+      - service: switch.turn_on
+        data:
+          entity_id: switch.candle_mode_candle_light
+          
+  ###############################################################################
+  ## Script that is called to turn on IR candles      
+  ###############################################################################
+  turn_off_candles:
+    alias: Turn off candles
+    sequence:
+      - service: switch.turn_off
+        data:
+          entity_id: switch.candles_raw
+      - delay:
+          seconds: 1
+      - service: switch.turn_off
+        data:
+          entity_id: switch.candles_raw
+      - delay:
+          seconds: 1
+      - service: switch.turn_off
+        data:
+          entity_id: switch.candles_raw

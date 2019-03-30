@@ -1,0 +1,63 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/02/2019
+#   @package        :   garage.yaml
+#   @description    :   Contains all elements that are in the garage
+#   @url            :   
+###############################################################################
+
+cover:
+# Garage Door
+  - platform: myq
+    #name: "Garage Door"
+    username: !secret myq_username
+    password: !secret myq_password
+    type: chamberlain
+    
+switch:
+  - platform: mqtt
+    name: "Garage Door Shelf Light"
+    command_topic: "cmnd/garage/door_shelf_light/POWER1"
+    state_topic: "stat/garage/door_shelf_light/POWER"
+    availability_topic: "tele/garage/door_shelf_light/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+   
+  - platform: mqtt
+    name: "Garage Shelf Light"
+    command_topic: "cmnd/garage/shelf_light/POWER1"
+    state_topic: "stat/garage/shelf_light/POWER1"
+    availability_topic: "tele/garage/shelf_light/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true 
+
+# Turn light switches into lights, and then group them together
+light:
+  - platform: switch
+    name: Garage Light    
+    entity_id: switch.garage_light
+  - platform: switch
+    name: Garage Door Shelf Light
+    entity_id: switch.garage_door_shelf_light
+  - platform: switch
+    name: Garage Shelf Light
+    entity_id: switch.garage_shelf_light
+  - platform: group
+    name: Garage Lights
+    entities:
+      - light.garage_light
+      - light.garage_door_shelf_light
+      - light.garage_shelf_light
+    
+###############################################################################
+#                               Automations
+###############################################################################
+#automation:

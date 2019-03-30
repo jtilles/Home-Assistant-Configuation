@@ -1,0 +1,30 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/16/2019
+#   @package        :   dark_sky.yaml
+#   @description    :   Contains Dark Sky weather platform + sensors
+#   @url            :   
+###############################################################################
+homeassistant:
+  customize:
+    sensor.dark_sky_apparent_temperature:
+      device_class: temperature
+    sensor.dark_sky_temperature:
+      device_class: temperature
+    sensor.dark_sky_humidity:
+      device_class: humidity
+
+
+# Weather Component
+weather:
+  - platform: darksky
+    api_key: !secret dark_sky_api_key
+    
+sensor:
+  - platform: darksky
+    api_key: !secret dark_sky_api_key
+    monitored_conditions:
+      - temperature
+      - apparent_temperature
+      - humidity
+      - precip_type

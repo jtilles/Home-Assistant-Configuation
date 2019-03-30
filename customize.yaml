@@ -79,6 +79,26 @@
   sensor.motion_detector_alarm_level:
     hidden: true
   
+  sensor.master_bedroom_humidity:
+    icon: mdi:water-percent
+    device_class: humidity
+  
+  sensor.master_bedroom_luminance:
+    icon: mdi:theme-light-dark
+    device_class: illuminance
+    
+  sensor.master_bedroom_temperature:
+    device_class: temperature
+    
+  sensor.staircase_multisensor_luminance:
+    device_class: illuminance
+  
+  sensor.staircase_multisensor_relative_humidity:
+    device_class: humidity
+    
+  sensor.staircase_multisensor_temperature:
+    device_class: temperature
+    
   sensor.motion_detector_alarm_type:
     hidden: true  
   
@@ -91,9 +111,6 @@
   binary_sensor.motion_detector_sensor:
     hidden: true
     
-  binary_sensor.kitchen_window_2:
-    device_class: window
-  
   sensor.front_door_access_control2:
     hidden: true
     
@@ -148,19 +165,19 @@
   sensor.living_room_power_management:
     hidden: true
     
-  sensor.outside_temp:
-    hidden: true
-    
   sensor.living_room_luminance:
     icon: mdi:weather-sunny
     friendly_name: Living Room Light
+    device_class: illuminance
     
   sensor.living_room_temperature:
     friendly_name: Living Room Temperature
+    device_class: temperature
   
   sensor.living_room_relative_humidity:
     friendly_name: Living Room Humidity
     icon: mdi:water-percent
+    device_class: humidity
     
   binary_sensor.living_room_multisensor_sensor:
     hidden: true

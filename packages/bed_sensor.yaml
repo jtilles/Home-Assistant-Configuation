@@ -9,7 +9,7 @@
 #   @url            :   
 ###############################################################################
 homeassistant:
-  customize:
+  # customize:
 
 group:
   bed_sensor_settings:

@@ -1,0 +1,30 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/07/2019
+#   @package        :
+#   @description    :
+#   @url            :
+###############################################################################
+sensor:
+  - platform: sabnzbd
+    host: !secret sabnzbd_ip
+    port: 8080
+    api_key: !secret sabnzbd_api_key
+    name: Media Downloader
+    sensors:
+      - current_status
+      - speed
+      - queue_size
+      - queue_remaining
+      - disk_size
+      - disk_free
+      - queue_count
+      - day_size
+      - week_size
+      - month_size
+      - total_size
+
+###############################################################################
+#                               Automations
+###############################################################################
+#automation:

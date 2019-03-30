@@ -1,0 +1,16 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/16/2019
+#   @package        :   speed_test.yaml
+#   @description    :   Performs a internet speed test every 30 minutes against
+#                       Tachyon Dynamics server in Chesapeake, VA
+#   @url            :   
+###############################################################################
+speedtestdotnet:
+  scan_interval:
+    minutes: 30
+  #server_id: 3974
+  monitored_conditions:
+    - ping
+    - download
+    - upload

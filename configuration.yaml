@@ -41,25 +41,40 @@ history:
 # View all events in a logbook
 # logbook: !include includes/logbook.yaml
 logbook:
+  include:
+    domains:
+      - automation
+      - binary_sensor
+      - climate
+      - cover
+      - device_tracker
+      - fan
+      - input_boolean
+      - input_number
+      - input_select
+      - light
+      - person
+      - sensor
+      - sun
+      - switch
+      - weather
+  exclude:
+    entities:
+      - automation.bed_sensor_state_machine
+      - automation.bed_sensor_update_empty_bed_weight
+      
+    
 
 # Track the sun
 sun:
 
+# Show system health
+system_health:
+
+
 # Getting the Hassio Tab
 hassio:
 
-# # InfluxDB
-# influxdb:
-  # host: 192.168.0.151
-  # port: 8086
-  # database: homeassistant
-  # username: homeassistant
-  # password: d64%hE$P$7xTzsB
-  # max_retries: 3
-  # default_measurement: state
-  # include:
-    # domains:
-      # - sensor
 
 # Purge Database Interval
 recorder:
@@ -67,10 +82,7 @@ recorder:
   purge_interval: 2
   purge_keep_days: 14
 
-weather:
-  - platform: darksky
-    api_key: !secret dark_sky_api_key
-
+    
 # Text to Speech
 tts:
   - platform: google
@@ -84,64 +96,9 @@ panel_iframe:
     title: Configurator
     icon: mdi:wrench
     url: !secret configurator_url
-  influxdb:
-    title: InfluxDB
-    icon: mdi:chart-areaspline
-    url: http://192.168.0.151:8888
-  grafana:
-    title: Grafana
-    icon: mdi:chart-timeline
-    url: http://192.168.0.151:3000
 
-# Enables Cloud
-cloud:
-  google_actions:
-    filter:
-      include_domains:
-      - light
-      - switch
-      - cover
-      - fan
-      - script
-      exclude_domains:
-      - automations
-      - groups
-      include_entities:
-      - group.christmas_lights
-      exclude_entities:
-      - switch.bedroom_fan_off
-      - switch.bedroom_fan_high
-      - switch.bedroom_fan_med
-      - switch.bedroom_fan_low
-      - switch.bedroom_fan_light
-      - switch.curtain_close
-      - switch.curtain_open
-      - switch.curtain_stop
-      - switch.fluxer
-      - switch.refrigerator_power
-      - switch.roller_shades_close
-      - switch.roller_shades_open
-      - switch.roller_shades_stop
-      - switch.washing_machine_power   
-    entity_config:
-      script.bedroom_morning:
-        name: Bedroom Morning Routine
-        aliases:
-          - bedroom morning
-        room: master bedroom    
-      group.christmas_lights:
-        name: Christmas Lights
-        aliases:
-          - Christmas Lights
-          - Holiday Lights
-      switch.heated_blanket:
-        name: Electric Blanket
-        aliases:
-          - Electric Blanket
-          - Heated Blanket
-      
 http:
-  base_url: !secret HASS_base_url
+  #base_url: !secret HASS_base_url
   #ssl_certificate: !secret ssl_certificate
   #ssl_key: !secret ssl_key
   #api_password: !secret http_password
@@ -171,6 +128,25 @@ binary_sensor:
     payload_on: "Online"
     payload_off: "Offline"
     device_class: "connectivity"
+    
+  - platform: template
+    sensors:
+      office_motion:
+        friendly_name: "Office Motion Sensor"
+        device_class: motion
+        value_template: "{{ states('sensor.motion_detector_burglar')|int > 0 }}"
+      living_room_motion:
+        friendly_name: "Living Room Motion Sensor"
+        device_class: motion
+        value_template: "{{ states('sensor.living_room_multisensor_alarm_level')|int == 255 }}"
+      master_bedroom_motion:
+        friendly_name: "Master Bedroom Motion Sensor"
+        device_class: motion
+        value_template: "{{ states('sensor.master_bedroom_motion_alarm')|int == 255 }}"
+      staircase_motion:
+        friendly_name: "Staircase Motion Sensor"
+        device_class: motion
+        value_template: "{{ states('sensor.staircase_multisensor_alarm_level')|int == 255 }}"
 
 openuv:
   api_key: !secret openuv_api_key
@@ -194,6 +170,7 @@ sensor:
       - 'queue_remaining'
       - 'disk_size'
       - 'disk_free'
+
   
   - platform: uptime
     name: Time Online
@@ -204,111 +181,116 @@ sensor:
   
   # Get IP address of website
   - platform: dnsip
-    hostname: joshilles.com
+    hostname: !secret personal_url
     resolver: 8.8.8.8
   
   - platform: cert_expiry
-    host: "joshilles.com"
+    host: !secret personal_url
+
     
   - platform: template
     sensors:
       # Office Motion Detector (z-wave)
-      office_motion:
-        friendly_name: "Office Motion Sensor"
-        value_template: >-
-          {% if is_state('sensor.motion_detector_burglar','0') %}
-            No Motion
-          {% elif is_state('sensor.motion_detector_burglar','8') %}
-            Motion
-          {% else %}
-            Unknown
-          {% endif %}
-        icon_template: >-
-          {% if is_state('sensor.motion_detector_burglar','0') %}
-            mdi:human-male
-          {% elif is_state('sensor.motion_detector_burglar','8') %}
-            mdi:run-fast
-          {% else %}
-            mdi:cancel
-          {% endif %}
+      # office_motion:
+        # friendly_name: "Office Motion Sensor"
+        # value_template: >-
+          # {% if is_state('sensor.motion_detector_burglar','0') %}
+            # No Motion
+          # {% elif is_state('sensor.motion_detector_burglar','8') %}
+            # Motion
+          # {% else %}
+            # Unknown
+          # {% endif %}
+        # icon_template: >-
+          # {% if is_state('sensor.motion_detector_burglar','0') %}
+            # mdi:human-male
+          # {% elif is_state('sensor.motion_detector_burglar','8') %}
+            # mdi:run-fast
+          # {% else %}
+            # mdi:cancel
+          # {% endif %}
       office_motion_battery:
         friendly_name: "Office Motion Detector Battery"
         device_class: battery
+        unit_of_measurement: '%'
         entity_id: zwave.motion_detector
         value_template: '{{states.zwave.motion_detector.attributes.battery_level}}'
       
       # Living Room Z-Wave Multisensor
-      living_room_motion:
-        friendly_name: "Living Room Motion"
-        value_template: >-
-          {% if is_state('sensor.living_room_multisensor_alarm_level','0') %}
-            No Motion
-          {% elif is_state('sensor.living_room_multisensor_alarm_level','255') %}
-            Motion
-          {% else %}
-            Unknown
-          {% endif %}
-        icon_template: >-
-          {% if is_state('sensor.living_room_multisensor_alarm_level','0') %}
-            mdi:human-male
-          {% elif is_state('sensor.living_room_multisensor_alarm_level','255') %}
-            mdi:run-fast
-          {% else %}
-            mdi:cancel
-          {% endif %}
+      # living_room_motion:
+        # friendly_name: "Living Room Motion"
+        # value_template: >-
+          # {% if is_state('sensor.living_room_multisensor_alarm_level','0') %}
+            # No Motion
+          # {% elif is_state('sensor.living_room_multisensor_alarm_level','255') %}
+            # Motion
+          # {% else %}
+            # Unknown
+          # {% endif %}
+        # icon_template: >-
+          # {% if is_state('sensor.living_room_multisensor_alarm_level','0') %}
+            # mdi:human-male
+          # {% elif is_state('sensor.living_room_multisensor_alarm_level','255') %}
+            # mdi:run-fast
+          # {% else %}
+            # mdi:cancel
+          # {% endif %}
       living_room_motion_battery:
         friendly_name: "Living Room Motion Detector Battery"
         device_class: battery
+        unit_of_measurement: '%'
         entity_id: zwave.living_room
         value_template: '{{states.zwave.living_room_multisensor.attributes.battery_level}}'
       
       #Bedroom Multisensor
-      master_bedroom_motion:
-        friendly_name: "Bedroom Motion"
-        value_template: >-
-          {% if is_state('sensor.master_bedroom_motion_alarm','0') %}
-            No Motion
-          {% elif is_state('sensor.master_bedroom_motion_alarm','255') %}
-            Motion
-          {% else %}
-            Unknown
-          {% endif %}
-        icon_template: >-
-          {% if is_state('sensor.master_bedroom_motion_alarm','0') %}
-            mdi:human-male
-          {% elif is_state('sensor.master_bedroom_motion_alarm','255') %}
-            mdi:run-fast
-          {% else %}
-            mdi:cancel
-          {% endif %}
+      # master_bedroom_motion:
+        # friendly_name: "Bedroom Motion"
+        # value_template: >-
+          # {% if is_state('sensor.master_bedroom_motion_alarm','0') %}
+            # No Motion
+          # {% elif is_state('sensor.master_bedroom_motion_alarm','255') %}
+            # Motion
+          # {% else %}
+            # Unknown
+          # {% endif %}
+        # icon_template: >-
+          # {% if is_state('sensor.master_bedroom_motion_alarm','0') %}
+            # mdi:human-male
+          # {% elif is_state('sensor.master_bedroom_motion_alarm','255') %}
+            # mdi:run-fast
+          # {% else %}
+            # mdi:cancel
+          # {% endif %}
       master_bedroom_motion_battery:
         friendly_name: "Master Bedroom Motion Detector Battery"
         device_class: battery
+        unit_of_measurement: '%'
         entity_id: zwave.bedroom_multisensor
         value_template: '{{states.zwave.bedroom_multisensor.attributes.battery_level}}'
         
       #Staircase Multisensor
-      staircase_motion:
-        friendly_name: "Staircase Motion"
-        value_template: >-
-          {% if is_state('sensor.staircase_multisensor_alarm_level','0') %}
-            No Motion
-          {% elif is_state('sensor.staircase_multisensor_alarm_level','255') %}
-            Motion
-          {% else %}
-            Unknown
-          {% endif %}
-        icon_template: >-
-          {% if is_state('sensor.staircase_multisensor_alarm_level','0') %}
-            mdi:human-male
-          {% elif is_state('sensor.staircase_multisensor_alarm_level','255') %}
-            mdi:run-fast
-          {% else %}
-            mdi:cancel
-          {% endif %}
+      # staircase_motion:
+        # friendly_name: "Staircase Motion"
+        # value_template: >-
+          # {% if is_state('sensor.staircase_multisensor_alarm_level','0') %}
+            # No Motion
+          # {% elif is_state('sensor.staircase_multisensor_alarm_level','255') %}
+            # Motion
+          # {% else %}
+            # Unknown
+          # {% endif %}
+        # icon_template: >-
+          # {% if is_state('sensor.staircase_multisensor_alarm_level','0') %}
+            # mdi:human-male
+          # {% elif is_state('sensor.staircase_multisensor_alarm_level','255') %}
+            # mdi:run-fast
+          # {% else %}
+            # mdi:cancel
+          # {% endif %}
       staircase_multisensor_battery:
         friendly_name: "Staircase Multisensor Battery"
         device_class: battery
+        unit_of_measurement: '%'
         entity_id: zwave.staircase_multisensor
         value_template: '{{states.zwave.staircase_multisensor.attributes.battery_level}}'  
         
@@ -317,10 +299,12 @@ sensor:
       connected_devices:
         friendly_name: "Devices on Network"
         value_template: >-
-          {% for state in states.device_tracker if state.state == 'home'-%}
+          {% for state in states.device_tracker if(state.state == 'home'
+              and state.attributes.source_type == 'router') -%}
             {% if loop.last -%}
               {{ loop.index }}/
-              {%- for state in states.device_tracker -%}
+              {%- for state in states.device_tracker 
+                    if(state.attributes.source_type == 'router') -%}
                 {%- if loop.last -%}
                   {{ loop.index }}
                 {%- endif %}
@@ -330,12 +314,6 @@ sensor:
               0
           {%- endfor %}
           
-      outside_temp:
-         friendly_name: "Outside Temperature"
-         value_template: '{{ state_attr("weather.dark_sky", "temperature") }}'
-         device_class: temperature
-         icon_template: mdi:thermometer
-         unit_of_measurement: °F
          
           
   # Sonoff Pow2 Connected to Fridge
@@ -350,22 +328,6 @@ sensor:
     value_template: '{{ value_json["ENERGY"]["Power"] }}'
     unit_of_measurement: "W"
        
-  
-  - platform: mqtt
-    name: "Josh Phone Battery"
-    state_topic: "owntracks/joshua/Josh_Pixel3"
-    value_template: '{{ value_json.batt }}'
-    unit_of_measurement: '%'
-    device_class: battery
-  
-  - platform: speedtest
-    monitored_conditions:
-      - ping
-      - download
-      - upload  
-    minute:
-     - 0
-     - 30
     
   - platform: systemmonitor
     resources:
@@ -381,7 +343,6 @@ sensor:
     host: !secret synology_dsm_ip
     username: !secret synology_username
     password: !secret synology_password
-    verify_ssl: False
     monitored_conditions:
       - disk_temp
       - volume_status
@@ -404,14 +365,8 @@ nest:
 
 # MQTT
 mqtt:
-  discovery: true
-  broker: !secret home_assistant_ip_address
-  birth_message:
-    topic: 'hass/status'
-    payload: 'online'
-  will_message:
-    topic: 'hass/status'
-    payload: 'offline'
+  #discovery: true
+  broker: !secret mqtt_broker_ip
   port: 1883
   client_id: Home-Assistant
   username: !secret mqtt_username
@@ -459,13 +414,13 @@ fan:
       - high
             
         
-cover:
-# Garage Door
-  - platform: myq
-    #name: "Garage Door"
-    username: !secret myq_username
-    password: !secret myq_password
-    type: chamberlain
+# cover:
+# # Garage Door
+  # - platform: myq
+    # #name: "Garage Door"
+    # username: !secret myq_username
+    # password: !secret myq_password
+    # type: chamberlain
     
 
 light:
@@ -489,12 +444,12 @@ light:
     state_topic: "stat/sonoff-CabLED/POWER"
     #state_topic: "stat/sonoff-CabLED/RESULT"
     #state_value_template: "{{ value_json.POWER }}"
-    #retain: true
+    retain: true
     qos: 1
     
-   # RGBCW/WW Controller for Underbed LEDS    
+   # RGBCW/WW Controller for Underbed LEDS   
   - platform: mqtt
-    name: "Underbed"
+    name: "Underbed LEDS"
     command_topic: "cmnd/bedroom/underbed/POWER"
     state_topic: "stat/bedroom/underbed/RESULT"
     state_value_template: "{{value_json.POWER}}"
@@ -523,10 +478,42 @@ light:
       - 4
     payload_on: "ON"
     payload_off: "OFF"
+    qos: 1
+    retain: true  
+    
+    # RGBCW/WW Controller for Headboard LEDS   
+  - platform: mqtt
+    name: "Headboard"
+    command_topic: "cmnd/bedroom/headboard/POWER"
+    state_topic: "stat/bedroom/headboard/RESULT"
+    state_value_template: "{{value_json.POWER}}"
+    availability_topic: "tele/bedroom/headboard/LWT"
     payload_available: "Online"
     payload_not_available: "Offline"
+    brightness_command_topic: "cmnd/bedroom/headboard/Dimmer"
+    brightness_state_topic: "stat/bedroom/headboard/RESULT"
+    brightness_scale: 100
+    on_command_type: "brightness"
+    brightness_value_template: "{{value_json.Dimmer}}"
+    color_temp_command_topic: "cmnd/bedroom/headboard/CT"
+    color_temp_state_topic: "stat/bedroom/headboard/RESULT"
+    color_temp_value_template: "{{value_json.CT}}"
+    rgb_command_topic: "cmnd/bedroom/headboard/Color2"
+    rgb_state_topic: "stat/bedroom/headboard/RESULT"
+    rgb_value_template: "{{value_json.Color.split(',')[0:3]|join(',')}}"
+    effect_command_topic: "cmnd/bedroom/headboard/Scheme"
+    effect_state_topic: "stat/bedroom/headboard/RESULT"
+    effect_value_template: "{{value_json.Scheme}}"
+    effect_list:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+    payload_on: "ON"
+    payload_off: "OFF"
     qos: 1
-    retain: false  
+    # retain: true   
  
 # Ceiling Fan Light 
   - platform: mqtt
@@ -539,16 +526,6 @@ light:
     state_value_template: "{{ value_json.POWER1 }}"
     payload_on: 'ON'
     payload_off: 'OFF'
-    
-# Eufy Components
-eufy:
-  devices:
-    - address: 192.168.0.158
-      access_token: zp2ZRqwVRhet6aLW086JgA
-      type: T1211
-      name: Smart Switch
-  username: !secret eufy_username
-  password: !secret eufy_password
     
 switch:
   - platform: mqtt
@@ -625,9 +602,9 @@ switch:
   
   - platform: mqtt
     name: "Office Lamp"
-    command_topic: "cmnd/Sonoff-Cord8/power"
-    state_topic: "stat/Sonoff-Cord8/POWER"
-    availability_topic: "tele/Sonoff-Cord8/LWT"
+    command_topic: "cmnd/office/lamp/power"
+    state_topic: "stat/office/lamp/POWER"
+    availability_topic: "tele/office/lamp/LWT"
     payload_available: "Online"
     payload_not_available: "Offline"
     qos: 1
@@ -671,31 +648,6 @@ switch:
     payload_off: "OFF"
     retain: true
     icon: mdi:fire
-  
-  - platform: mqtt
-    name: "Garage Door Shelf Light"
-    command_topic: "cmnd/garage/door_shelf_light/POWER1"
-    state_topic: "stat/garage/door_shelf_light/POWER"
-    availability_topic: "tele/garage/door_shelf_light/LWT"
-    payload_available: "Online"
-    payload_not_available: "Offline"
-    qos: 1
-    payload_on: "ON"
-    payload_off: "OFF"
-    retain: true
-   
-  - platform: mqtt
-    name: "Garage Shelf Light"
-    command_topic: "cmnd/garage/shelf_light/POWER1"
-    state_topic: "stat/garage/shelf_light/POWER1"
-    availability_topic: "tele/garage/shelf_light/LWT"
-    payload_available: "Online"
-    payload_not_available: "Offline"
-    qos: 1
-    payload_on: "ON"
-    payload_off: "OFF"
-    retain: true 
-    
     
   - platform: mqtt
     name: Refrigerator Power
@@ -707,9 +659,15 @@ switch:
     payload_on: "ON"
     payload_off: "OFF"
   
-  - platform: tplink
-    host: 192.168.0.155
-    name: "Living Room Lamp"
+  - platform: mqtt
+    name: Living Room Lamp
+    command_topic: "cmnd/living_room/lamp/POWER"
+    availability_topic: "tele/living_room/lamp/LWT"
+    state_topic: "stat/living_room/lamp/POWER"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    payload_on: "ON"
+    payload_off: "OFF"
     
   - platform: broadlink
     host: 192.168.0.190
@@ -748,8 +706,22 @@ switch:
       bedroom_fan_light:
         command_on: 'sgB4Ag4NDQ0NDQ4MDgwODQ0NDgwODA4NDQ0OqRsNDRoOGg0aDhkOGg0aGwwbDRoNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGwwbDQ0aDhkOGhsMGw0NGhsMDhkbDQ0aDhkbDQ4ZGw0NGhsMDhoNGg4ZDhoaDQ4ZDhkOGg4ZDhoNGg4ZDhkbDRsMGw0NGhsNGg0bDBsMGw0bDBsNGg0NAANJDgwODA4NDgwODA4NDQ0NDQ4MDgwODQ2qGw0NGg4ZDhoNGg4ZDhoaDRsNGg0NGg4aGg0bDBsNGg0NGg4aGg0NGhsNDRobDBsNDRoOGQ4aGg0bDA4aGg0OGRsNDRoOGRsNDRobDA4aGg0OGQ4aDRoOGRsMDhoOGQ4aDRoOGQ4aDRoOGhoNGwwbDQ0aGwwbDBsNGwwbDRoNGwwbDQ0AA6cNDQ0NDgwODQ0NDQ0NDQ4NDQ0NDQ0NDqoaDQ4ZDhoNGg4aDRoNGhsNGg0aDQ4aDRoaDRsNGg0aDQ4aDRobDA4ZGw0NGhsNGg0NGg4aDRobDBsNDRobDQ0aGg0OGQ4aGg0OGhoNDRobDQ0aDRoOGg0aDRoOGg0aGg0OGg0aGwwbDQ0aGwwbDBsNGwwbDRoNDRobDRoNDRoOGhoNDQADSQ4NDQ0ODA4MDgwODQ0NDQ0ODA4NDQ0NqxoNDRoOGg0aDRoOGg0aGg0bDBsNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGw0aDQ0aDhkOGhoNGwwOGhoNDhoaDQ0aDhoaDQ0aGw0NGhoNDhkOGg0aDhoNGg0aDhkbDQ0aDhkbDRsMDhkbDRsMGw0aDRsMGw0NGhsMGw0NGg4ZGw0NAAXc'
         command_off: 'sgB4Ag4NDQ0NDQ4MDgwODQ0NDgwODA4NDQ0OqRsNDRoOGg0aDhkOGg0aGwwbDRoNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGwwbDQ0aDhkOGhsMGw0NGhsMDhkbDQ0aDhkbDQ4ZGw0NGhsMDhoNGg4ZDhoaDQ4ZDhkOGg4ZDhoNGg4ZDhkbDRsMGw0NGhsNGg0bDBsMGw0bDBsNGg0NAANJDgwODA4NDgwODA4NDQ0NDQ4MDgwODQ2qGw0NGg4ZDhoNGg4ZDhoaDRsNGg0NGg4aGg0bDBsNGg0NGg4aGg0NGhsNDRobDBsNDRoOGQ4aGg0bDA4aGg0OGRsNDRoOGRsNDRobDA4aGg0OGQ4aDRoOGRsMDhoOGQ4aDRoOGQ4aDRoOGhoNGwwbDQ0aGwwbDBsNGwwbDRoNGwwbDQ0AA6cNDQ0NDgwODQ0NDQ0NDQ4NDQ0NDQ0NDqoaDQ4ZDhoNGg4aDRoNGhsNGg0aDQ4aDRoaDRsNGg0aDQ4aDRobDA4ZGw0NGhsNGg0NGg4aDRobDBsNDRobDQ0aGg0OGQ4aGg0OGhoNDRobDQ0aDRoOGg0aDRoOGg0aGg0OGg0aGwwbDQ0aGwwbDBsNGwwbDRoNDRobDRoNDRoOGhoNDQADSQ4NDQ0ODA4MDgwODQ0NDQ0ODA4NDQ0NqxoNDRoOGg0aDRoOGg0aGg0bDBsNDhkOGRsNGwwbDRoNDhkOGhoNDhkbDQ0aGw0aDQ0aDhkOGhoNGwwOGhoNDhoaDQ0aDhoaDQ0aGw0NGhoNDhkOGg0aDhoNGg0aDhkbDQ0aDhkbDRsMDhkbDRsMGw0aDRsMGw0NGhsMGw0NGg4ZGw0NAAXc'
-        
-        
+      candles_raw:
+        command_on: 'JgBgAAABLZEVERUPFREVNRUQFRAWDxUQFjQVNhU1FRAVNRU1FRAWNBURFRAVEBUQFREVDxURFRAWNBU1FTYVNRU1FTUWNBU1FQAFQgABL0cVAAxUAAEuSBUADFQAAS1IFQANBQAAAAAAAAAA'
+        command_off: 'JgBgAAABLJMUERQRFRAUNhUQFREUEBURFDYVNRQ2FBIUNRQ2FRETNhURFDUVERQRFBEVEBQSFBAVNhQRFDYUNhQ2FDYUNhQ2FAAFQwABK0gVAAxWAAErShMADFYAAStJFAANBQAAAAAAAAAA'
+      candle_mode_candle_light:
+        command_on: 'JgBgAAABLZEWEBUPFREVNRUQFREVDxURFTQVNhU1FRAWNBY0FREVNBURFRAWNBU1FRAWEBUPFREVNRU1Fg8VEBY0FTYVNRU0FQAFQwABLEkVAAxUAAEtSBUADFQAAS1IFQANBQAAAAAAAAAA'
+        command_off: 'JgBgAAABLZIUERUQFRAVNRUQFREVDxURFDYVNRQ2FRAWNBY0FREUNRURFTUVNRY0FREVDxURFRAVNRUQFg8VEBY0FTYVNRU1FQAFQwABLkcWAAxUAAEtSBUADFUAAS1HFgANBQAAAAAAAAAA'
+      candle_dim:
+        command_on:  'JgBgAAABLpEVEBYPExIWNBQSFRAVEBMSFTUTNxY0FhAVNBY0FBIVNRQRFTUTEhYQFTQWEBUQExIVNRITFTUTOBQQEzgUNhM3EgAFRQABKksRAAxYAAEsSBQADFYAAStKEgANBQAAAAAAAAAA'
+        command_off: 'JgBYAAABLpEVERUPFREVNBURFRAWDxUQFjQVNhU1FRAVNRU1FRAVNRUQFhAVDxURFTUVEBURFQ8VNhU1FTQVNhUQFTUWNBU1FQAFQgABLkcWAAxTAAEuRxYADQU='
+      candle_2h_4h:
+        command_on: 'JgBYAAABLpEVEBYPFREVNBYQFRAWDxUQFjQVNhU1FRAVNRU1FRAWNBURFBEVNRUQFRAVEBURFBAVNhU1FRAVNRU1FTUWNBU1FQAFQQABLUgWAAxTAAEtSBUADQU='
+        command_off: 'JgBYAAABMJEWEBYPFRAWNBYQFREVDxURFTUVNRY0FhAVNRU1FRAWNBURFTUVNRYPFREVEBUQFRAWNBURFRAWNBU1FTYVNRU0FgAFQgABLkcWAAxUAAEtSBUADQU='
+      candle_6h_8h:
+        command_on: 'JgBQAAABLpEWEBUPFREVNRQRFREVDxURFTUUNhY0FREVNRU0FREVNRQRFREVDxU2FRAUERUQFg8VNhU1FTQVERU1FDYWNBY0FQAFQgABLkgVAA0FAAAAAAAAAAA='
+        command_off: 'JgBYAAABLpEVERUPFREVNRUQFhAVDxURFTUVNRY0FREVNBY0FREVNRUQFTUVERU0FREVEBYPFRAWNBURFTUVEBU1FTYVNRU0FgAFQgABLkkVAAxUAAExRxYADQU='
+     
 # change light color throughout day    
   - platform: flux
     lights:
@@ -806,3 +778,4 @@ script: !include scripts.yaml
 scene: !include scene.yaml
 device_tracker: !include device_tracker.yaml
 zone: !include zones.yaml
+person: !include people.yaml

@@ -109,7 +109,7 @@
     data:
       entity_id: cover.bedroom_window_coverings
       
-   
+
     
 # Turn off living_room_lamp and porch_switch at 10pm
 - alias: Turn off Lamp
@@ -454,7 +454,7 @@
 - alias: Laundry Light On
   trigger:
     - platform: state
-      entity_id: binary_sensor.laundry_occupancy
+      entity_id: binary_sensor.laundry_room_occupancy
       to: 'on'
   action:
     service: switch.turn_on
@@ -464,7 +464,7 @@
 - alias: Laundry Light Off
   trigger:
     - platform: state
-      entity_id: binary_sensor.laundry_occupancy
+      entity_id: binary_sensor.laundry_room_occupancy
       to: 'off'
       for:
         minutes: 10
@@ -570,9 +570,11 @@
   action:
   - service: switch.turn_on
     entity_id:
-      - switch.fluxer
       - switch.refrigerator_power
       - switch.washing_machine_power
+  - service: notify.josh_phone
+    data:
+      message: "Home Assitant is back up and running"
 
     
     
@@ -612,7 +614,7 @@
       # entity_id: sensor.master_bedroom_cube.attributes.from_side
       # from: '0'
   action:
-    - service: light.turn_off
+    - service: light.toggle
       entity_id: group.bedroom_lights
       
  # Bedroom Cube Turn on light
@@ -623,7 +625,7 @@
       # entity_id: sensor.master_bedroom_cube.attributes.from_side
       # from: '0'
   action:
-    - service: light.turn_on
+    - service: light.toggle
       entity_id: group.bedroom_lights      
 
 
@@ -697,107 +699,50 @@
         brightness_pct: 15
         rgb_color: [255, 0, 0]        
         
-# Say message when door is left open
-- alias: Door Left Open
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.front_door
-      to: 'on'
-      for:
-        minutes: 5
-        seconds: 1
-    - platform: state
-      entity_id: binary_sensor.patio_door
-      to: 'on'
-      for:
-        minutes: 2  
-        seconds: 1
-    - platform: state
-      entity_id: binary_sensor.garage_house_door
-      to: 'on'
-      for:
-        minutes: 5
-        seconds: 1
-    - platform: state
-      entity_id: binary_sensor.kitchen_window
-      to: 'on'
-      for:
-        seconds: 30
-  condition:
-    condition: template
-    value_template: "{{ not(states('climate.hallway') == 'eco' or states('climate.hallway') == 'off') }}" 
-  action:
-    - service: media_player.volume_set
-      data:
-        entity_id:
-          - media_player.master_bedroom_speaker
-          - media_player.kitchen_speaker
-          - media_player.gh_home_hub
-          - media_player.garage_speaker
-        volume_level: 0.6
-    - service: notify.josh_phone
-      data_template:
-        message: >
-          Hey dumbass, you left the
-          {% if trigger.entity_id == 'binary_sensor.front_door' -%}
-          FRONT DOOR 
-          {% elif trigger.entity_id == 'binary_sensor.garage_house_door' -%}
-          GARAGE DOOR 
-          {% elif trigger.entity_id == 'binary_sensor.patio_door' -%}
-          PATIO DOOR 
-          {% elif trigger.entity_id == 'binary_sensor.kitchen_window' -%}
-          KITCHEN WINDOW 
-          {% endif -%}
-          open, HVAC isn't free! I am turning the HVAC off!
-    - service: tts.google_say
-      entity_id:
-        - media_player.master_bedroom_speaker
-        - media_player.kitchen_speaker   
-        - media_player.gh_home_hub
-        - media_player.garage_speaker
-      data_template:
-        message: >
-          Hey dumbass, you left the
-          {% if trigger.entity_id == 'binary_sensor.front_door' -%}
-          FRONT DOOR 
-          {% elif trigger.entity_id == 'binary_sensor.garage_house_door' -%}
-          GARAGE DOOR 
-          {% elif trigger.entity_id == 'binary_sensor.patio_door' -%}
-          PATIO DOOR 
-          {% elif trigger.entity_id == 'binary_sensor.kitchen_window' -%}
-          KITCHEN WINDOW 
-          {% endif -%}
-          open, HVAC isn't free!  I am turning the HVAC off!
-    
-    - service: climate.set_operation_mode
-      data:
-        operation_mode: 'eco'
-        entity_id:
-        - climate.hallway
-        
-        
-- alias: Play random audio clip
-  initial_state: true
-  trigger: 
-    - platform: state
-      entity_id: light.kitchen_switch
-      to: 'on'
-  action:
-    - service: media_player.play_media
-      data_template:
-        entity_id: media_player.gh_home_hub
-        media_content_type: 'audio/wav'
-        media_content_id: >
-          https://hass.joshilles.com/local/audio/
-          {{- [
-            "silence_lambs_liver.wav",
-            "silence_lambs_lotion.wav",
-            "silence_lambs_hose.wav",
-            "t1_be_back.wav",
-            "t1_terminated.wav",
-            "t2_hasta_la_vista.wav",
-            "t3_postponed.wav",
-            "christmas_vacation_no_good.wav",
-            "bushw_eavesdropping1.wav"
-          ] | random
-          }}      
+# - alias: Play random audio clip
+  # initial_state: true
+  # trigger: 
+    # - platform: state
+      # entity_id: light.kitchen_switch
+      # to: 'on'
+  # action:
+    # - service: media_player.play_media
+      # data_template:
+        # entity_id: media_player.gh_home_hub
+        # media_content_type: 'audio/wav'
+        # media_content_id: >
+          # https://hass.joshilles.com/local/audio/
+          # {{- [
+            # "silence_lambs_liver.wav",
+            # "silence_lambs_lotion.wav",
+            # "silence_lambs_hose.wav",
+            # "t1_be_back.wav",
+            # "t1_terminated.wav",
+            # "t2_hasta_la_vista.wav",
+            # "t3_postponed.wav",
+            # "christmas_vacation_no_good.wav",
+            # "bushw_eavesdropping1.wav"
+          # ] | random
+          # }}      
+          
+# - alias: Plex webhooks
+  # trigger:
+    # platform: webhook
+    # webhook_id: 'plex'
+  # action:
+    # - service: system_log.write
+      # data_template: 
+        # level: 'warning'
+        # message: >
+          # {% set place_holder = trigger.data.payload.__class__.__name__ %}
+          # {{ place_holder }}
+  # # {% set place_holder = trigger.data.payload.decode()|tojson %}
+  # # {{ place_holder["event"] }}
+    # - service: notify.josh_phone
+      # data_template:
+        # message: >
+          # {% set place_holder = trigger.data.payload.__class__.__name__ %}
+          # {{ place_holder }}
+
+
+          

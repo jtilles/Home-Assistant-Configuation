@@ -1,0 +1,486 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/14/2019
+#   @package        :   xiaomi_sensors.yaml
+#   @description    :   Package containing explicit definition of all xiaomi zigbee sensors
+#   @url            :   
+###############################################################################
+   
+binary_sensor:
+  ## Garage House Door ##
+  - platform: mqtt
+    name: "Garage House Door"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/garage/house_door"
+    payload_on: false
+    payload_off: true
+    value_template: "{{ value_json.contact }}"
+    device_class: "door"
+  
+  ## Patio Door ##
+  - platform: mqtt
+    name: "Patio Door"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/living_room/patio_door"
+    payload_on: false
+    payload_off: true
+    value_template: "{{ value_json.contact }}"
+    device_class: "door"
+    
+  ## Front Door ##
+  - platform: mqtt
+    name: "Front Door"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/kitchen/front_door"
+    payload_on: false
+    payload_off: true
+    value_template: "{{ value_json.contact }}"
+    device_class: "door"
+  
+  ## Kitchen Window ##
+  - platform: mqtt
+    name: "Kitchen Window"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/kitchen/window"
+    payload_on: false
+    payload_off: true
+    value_template: "{{ value_json.contact }}"
+    device_class: "window"
+    
+  ## Office Window A ##
+  - platform: mqtt
+    name: "Office Window A"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/office/window_a"
+    payload_on: false
+    payload_off: true
+    value_template: "{{ value_json.contact }}"
+    device_class: "window"  
+    
+  ## Office Window B ##
+  - platform: mqtt
+    name: "Office Window B"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/office/window_b"
+    payload_on: false
+    payload_off: true
+    value_template: "{{ value_json.contact }}"
+    device_class: "window"  
+    
+  ## Kitchen Leak ##
+  - platform: mqtt
+    name: "Kitchen Sink Moisture"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/kitchen/sink_leak"
+    payload_on: true
+    payload_off: false
+    value_template: "{{ value_json.water_leak }}"
+    device_class: "moisture"
+    
+  ## Office Closet Occupancy ##
+  - platform: "mqtt"
+    name: Office Closet Occupancy
+    state_topic: "zigbee2mqtt/office/office_closet_occupancy"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    payload_on: true
+    payload_off: false
+    value_template: "{{ value_json.occupancy }}"
+    device_class: "motion"
+
+  ## Garage Occupancy ##
+  - platform: "mqtt"
+    name: Garage Occupancy
+    state_topic: "zigbee2mqtt/garage/occupancy"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    payload_on: true
+    payload_off: false
+    value_template: "{{ value_json.occupancy }}"
+    device_class: "motion"
+
+  ## Laundry Room Occupancy ##
+  - platform: "mqtt"
+    name: Laundry Room Occupancy
+    state_topic: "zigbee2mqtt/laundry_room/occupancy"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    payload_on: true
+    payload_off: false
+    value_template: "{{ value_json.occupancy }}"
+    device_class: "motion"    
+ 
+###############################################################################
+## Sensor Values 
+###############################################################################
+sensor:
+  ## Master Bathroom Temp/Humidity/Pressure Sensor ##
+  - platform: "mqtt"
+    name: Master Bathroom Temperature
+    state_topic: "zigbee2mqtt/master_bathroom/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    value_template: "{{ value_json.temperature }}"
+  - platform: "mqtt"
+    name: Master Bathroom Humidity
+    state_topic: "zigbee2mqtt/master_bathroom/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "humidity"
+    value_template: "{{ value_json.humidity }}"  
+  - platform: "mqtt"
+    name: Master Bathroom Pressure
+    state_topic: "zigbee2mqtt/master_bathroom/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "hPa"
+    device_class: "pressure"
+    value_template: "{{ value_json.pressure }}"
+  - platform: "mqtt"
+    name: Master Bathroom Sensor Battery
+    state_topic: "zigbee2mqtt/master_bathroom/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"  
+    
+  ## Office Temp/Humidity/Pressure Sensor ##
+  - platform: "mqtt"
+    name: Office Temperature
+    state_topic: "zigbee2mqtt/office/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    value_template: "{{ value_json.temperature }}"
+  - platform: "mqtt"
+    name: Office Humidity
+    state_topic: "zigbee2mqtt/office/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "humidity"
+    value_template: "{{ value_json.humidity }}"  
+  - platform: "mqtt"
+    name: Office Pressure
+    state_topic: "zigbee2mqtt/office/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "hPa"
+    device_class: "pressure"
+    value_template: "{{ value_json.pressure }}"
+  - platform: "mqtt"
+    name: Office Sensor Battery
+    state_topic: "zigbee2mqtt/office/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"  
+
+  ## Garage Temp/Humidity/Pressure Sensor ##
+  - platform: "mqtt"
+    name: Garage Temperature
+    state_topic: "zigbee2mqtt/garage/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    value_template: "{{ value_json.temperature }}"
+  - platform: "mqtt"
+    name: Garage Humidity
+    state_topic: "zigbee2mqtt/garage/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "humidity"
+    value_template: "{{ value_json.humidity }}"  
+  - platform: "mqtt"
+    name: Garage Pressure
+    state_topic: "zigbee2mqtt/garage/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "hPa"
+    device_class: "pressure"
+    value_template: "{{ value_json.pressure }}"
+  - platform: "mqtt"
+    name: Garage Sensor Battery
+    state_topic: "zigbee2mqtt/garage/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}" 
+    
+  ## Kitchen Temp/Humidity/Pressure Sensor ##
+  - platform: "mqtt"
+    name: Kitchen Temperature
+    state_topic: "zigbee2mqtt/kitchen/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    value_template: "{{ value_json.temperature }}"
+  - platform: "mqtt"
+    name: Kitchen Humidity
+    state_topic: "zigbee2mqtt/kitchen/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "humidity"
+    value_template: "{{ value_json.humidity }}"  
+  - platform: "mqtt"
+    name: Kitchen Pressure
+    state_topic: "zigbee2mqtt/kitchen/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "hPa"
+    device_class: "pressure"
+    value_template: "{{ value_json.pressure }}"
+  - platform: "mqtt"
+    name: Kitchen Sensor Battery
+    state_topic: "zigbee2mqtt/kitchen/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"   
+ 
+  ## Guest Bedroom Temp/Humidity/Pressure Sensor ##
+  - platform: "mqtt"
+    name: Guest Bedroom Temperature
+    state_topic: "zigbee2mqtt/guest_room/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    value_template: "{{ value_json.temperature }}"
+  - platform: "mqtt"
+    name: Guest Bedroom Humidity
+    state_topic: "zigbee2mqtt/guest_room/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "humidity"
+    value_template: "{{ value_json.humidity }}"  
+  - platform: "mqtt"
+    name: Guest Bedroom Pressure
+    state_topic: "zigbee2mqtt/guest_room/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "hPa"
+    device_class: "pressure"
+    value_template: "{{ value_json.pressure }}"
+  - platform: "mqtt"
+    name: Guest Bedroom Sensor Battery
+    state_topic: "zigbee2mqtt/guest_room/temp_humidity"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"  
+  
+###############################################################################
+## Buttons 
+###############################################################################
+  - platform: "mqtt"
+    state_topic: "zigbee2mqtt/master_bedroom/button"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:toggle-switch"
+    value_template: "{{ value_json.click }}"
+    expire_after: 1
+  - platform: "mqtt"
+    name: Master Bedroom Lights Button Battery
+    state_topic: "zigbee2mqtt/master_bedroom/button"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"
+    
+  - platform: "mqtt"
+    state_topic: "zigbee2mqtt/sam_office/hug_button"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:toggle-switch"
+    value_template: "{{ value_json.click }}"
+    expire_after: 1
+  - platform: "mqtt"
+    name: Hug Button Battery
+    state_topic: "zigbee2mqtt/sam_office/hug_button"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"    
+ 
+ 
+###############################################################################
+## Battery Values 
+###############################################################################
+  - platform: mqtt
+    name: "Garage House Door Battery"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/garage/house_door"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery"
+
+  - platform: mqtt
+    name: Patio Door Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/living_room/patio_door"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery"
+    
+  - platform: mqtt
+    name: Front Door Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/kitchen/front_door"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery"  
+    
+  - platform: mqtt
+    name: Kitchen Window Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/kitchen/window"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery"  
+  
+  - platform: mqtt
+    name: Office Window A Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/office/window_a"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery"
+      
+  - platform: mqtt
+    name: Office Window B Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/office/window_b"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery"  
+    
+  - platform: mqtt
+    name: Kitchen Leak Detector Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/kitchen/sink_leak"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery"    
+  
+  - platform: mqtt
+    name: Office Closet Occupancy Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/office/office_closet_occupancy"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery" 
+  - platform: "mqtt"
+    name: Office Closet Illuminance
+    state_topic: "zigbee2mqtt/office/office_closet_occupancy"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "lx"
+    device_class: "illuminance"
+    value_template: "{{ value_json.illuminance }}"    
+      
+  - platform: mqtt
+    name: Garage Occupancy Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/garage/occupancy"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery" 
+  - platform: "mqtt"
+    name: Garage Illuminance
+    state_topic: "zigbee2mqtt/garage/occupancy"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "lx"
+    device_class: "illuminance"
+    value_template: "{{ value_json.illuminance }}"     
+    
+  - platform: mqtt
+    name: Laundry Room Occupancy Battery
+    availability_topic: "zigbee2mqtt/bridge/state"
+    state_topic: "zigbee2mqtt/laundry_room/occupancy"
+    unit_of_measurement: "%"
+    value_template: "{{ value_json.battery }}"
+    device_class: "battery" 
+  - platform: "mqtt"
+    name: Laundry Room Illuminance
+    state_topic: "zigbee2mqtt/laundry_room/occupancy"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "lx"
+    device_class: "illuminance"
+    value_template: "{{ value_json.illuminance }}"       
+    
+    
+      
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  - alias: Bedroom Light Button
+    initial_state: true
+    trigger:
+      platform: mqtt
+      topic: 'zigbee2mqtt/master_bedroom/button'
+    condition:
+      condition: template
+      value_template: "{{ ('single' == trigger.payload_json.click) or (trigger.payload_json.click == 'double') }}"
+    action:
+      service_template: >
+        {%- if trigger.payload_json.click == 'single' -%}
+          light.toggle
+        {%- elif trigger.payload_json.click == 'double' -%}
+          scene.turn_on
+        {%- endif %}
+      data_template:
+        entity_id: >-
+          {%- if trigger.payload_json.click == 'single' -%}
+            light.bedroom_lights
+          {%- elif trigger.payload_json.click == 'double' -%}
+            scene.bedroom_lights_white
+          {%- endif %}
+      
+  - alias: Sam Needs a Hug
+    initial_state: true
+    trigger:
+      platform: mqtt
+      topic: 'zigbee2mqtt/sam_office/hug_button'
+    condition:
+      condition: template
+      value_template: '{{ "single" == trigger.payload_json.click }}'
+    action:
+      service: script.sam_needs_a_hug
+
+
+###############################################################################
+#                               Scripts
+###############################################################################
+script:
+  ###############################################################################
+  ## Script that is called by pressing the 'Hug' button, indicating Sam wants a hug
+  ## one of the sadest, most pathetic uses of automation
+  ###############################################################################  
+  sam_needs_a_hug:
+    alias: Sam needs a Hug
+    sequence:
+      - service: tts.google_say
+        entity_id:
+          - media_player.guest_bedroom_speaker
+        data:
+          message: "Josh will be right up to give you a hug.  Hang in there champ"
+      - delay:
+          seconds: 1
+      - service: tts.google_say
+        entity_id:
+          - media_player.garage_speaker
+          - media_player.gh_home_hub
+          - media_player.master_bedroom_speaker
+        data:
+          message: "Your needy girl is requesting a hug and a compliment"    
+      - service: notify.josh_phone
+        data:
+          message: "Go give the wife a hug"
+      - service: switch.toggle
+        data:
+          entity_id: switch.office_lamp
+      - delay:
+          milliseconds: 500
+      - service: switch.toggle
+        data:
+          entity_id: switch.office_lamp
+      - delay:
+          milliseconds: 500
+      - service: switch.toggle
+        data:
+          entity_id: switch.office_lamp
+      - delay:
+          milliseconds: 500
+      - service: switch.toggle
+        data:
+          entity_id: switch.office_lamp

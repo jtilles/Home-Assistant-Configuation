@@ -1,0 +1,26 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/02/2019
+#   @package        :   air_cleaner.yaml
+#   @description    :   Utilizes a PMS5003 PM2.5 Air Quality Monitor with TASOMOTA
+#                         firmware to control a home made air cleaner for the shop
+#   @url            :   
+###############################################################################
+
+sensor:
+  - platform: mqtt
+    name: "Garage Air Quality"
+    state_topic: "tele/dev/SENSOR"
+    value_template: "{{ value_json.PMS5003['CF2.5'] }}"
+    unit_of_measurement: 'ug/m3'
+    # availability_topic: "tele/dev/LWT"
+    # payload_available: "Online"
+    # payload_not_available: "Offline"
+    json_attributes_topic: "tele/dev/SENSOR"
+    
+    
+###############################################################################
+#                               Automations
+###############################################################################
+#automation:
+

@@ -1,0 +1,165 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   02/21/2019
+#   @package        :   Dad Mode
+#   @description    :   Lets users know if they left any doors open when the HVAC is on
+#                         will turn off the HVAC 5 minutes after announcing a warning
+#   @url            :   
+###############################################################################
+homeassistant:
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  - alias: Door Left Open
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.front_door
+        to: 'on'
+        for:
+          minutes: 5
+          seconds: 1
+      - platform: state
+        entity_id: binary_sensor.patio_door
+        to: 'on'
+        for:
+          minutes: 2  
+          seconds: 1
+      - platform: state
+        entity_id: binary_sensor.garage_house_door
+        to: 'on'
+        for:
+          minutes: 5
+          seconds: 1
+      - platform: state
+        entity_id: binary_sensor.kitchen_window
+        to: 'on'
+        for:
+          seconds: 30
+    condition:
+      condition: template
+      value_template: "{{ not(states('climate.hallway') == 'eco' or states('climate.hallway') == 'off') }}" 
+    action:
+      - service: media_player.volume_set
+        data:
+          entity_id:
+            - media_player.master_bedroom_speaker
+            - media_player.kitchen_speaker
+            - media_player.gh_home_hub
+            - media_player.garage_speaker
+          volume_level: 0.6
+      - service: notify.josh_phone
+        data_template:
+          message: >
+            {% set status = 'Heating' if states('climate.hallway') == 'heat' else 'Air Conditioning' if states('climate.hallway') == 'cool' else 'HVAC'  %}
+            Hey dumbass, you left the
+            {% if trigger.entity_id == 'binary_sensor.front_door' -%}
+            FRONT DOOR 
+            {% elif trigger.entity_id == 'binary_sensor.garage_house_door' -%}
+            GARAGE DOOR 
+            {% elif trigger.entity_id == 'binary_sensor.patio_door' -%}
+            PATIO DOOR 
+            {% elif trigger.entity_id == 'binary_sensor.kitchen_window' -%}
+            KITCHEN WINDOW 
+            {% endif -%}
+            open, {{status}} isn't free!  I am turning the {{status}} off in 5 minutes if not resolved!
+      - service: tts.google_say
+        entity_id:
+          - media_player.master_bedroom_speaker
+          - media_player.kitchen_speaker   
+          - media_player.gh_home_hub
+          - media_player.garage_speaker
+        data_template:
+          message: >
+            {% set status = 'Heating' if states('climate.hallway') == 'heat' else 'Air Conditioning' if states('climate.hallway') == 'cool' else 'HVAC'  %}
+            Hey dumbass, you left the
+            {% if trigger.entity_id == 'binary_sensor.front_door' -%}
+            FRONT DOOR 
+            {% elif trigger.entity_id == 'binary_sensor.garage_house_door' -%}
+            GARAGE DOOR 
+            {% elif trigger.entity_id == 'binary_sensor.patio_door' -%}
+            PATIO DOOR 
+            {% elif trigger.entity_id == 'binary_sensor.kitchen_window' -%}
+            KITCHEN WINDOW 
+            {% endif -%}
+            open, {{status}} isn't free!  I am turning the {{status}} off in 5 minutes if not resolved!
+      - service: script.turn_off_hvac   
+      
+###############################################################################
+#                               Scripts
+###############################################################################
+script:
+  ###############################################################################
+  ## Script that is called to turn off HVAC 5 minutes after warning
+  ##  turn t-stat to 'eco' mode if door is still left open and t-stat is on     
+  ###############################################################################
+  turn_off_hvac:
+    alias: Turn off HVAC
+    sequence:
+      - delay:
+          minutes: 5
+      - condition: template
+        value_template: "{{ not(states('climate.hallway') == 'eco' or states('climate.hallway') == 'off') }}" 
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: binary_sensor.front_door
+            state: 'on'
+          - condition: state
+            entity_id: binary_sensor.patio_door
+            state: 'on'
+          - condition: state
+            entity_id: binary_sensor.garage_house_door
+            state: 'on'
+          - condition: state
+            entity_id: binary_sensor.kitchen_window
+            state: 'on'  
+      - service: media_player.volume_set
+        data:
+          entity_id:
+            - media_player.master_bedroom_speaker
+            - media_player.kitchen_speaker
+            - media_player.gh_home_hub
+            - media_player.garage_speaker
+          volume_level: 0.6
+      - service: notify.josh_phone
+        data_template:
+          message: >
+            {% set status = 'Heating' if states('climate.hallway') == 'heat' else 'Air Conditioning' if states('climate.hallway') == 'cool' else 'HVAC'  %}
+            You really did it now, dipshit, you left the
+            {% if is_state('binary_sensor.front_door', 'on') %}
+            Front Door
+            {% elif is_state('binary_sensor.garage_house_door', 'on') %} 
+            GARAGE DOOR
+            {% elif is_state('binary_sensor.patio_door', 'on') %} 
+            PATIO DOOR
+            {% elif is_state('binary_sensor.kitchen_window', 'on') %} 
+            KITCHEN WINDOW
+            {% endif %}
+            open, {{status}} isn't free!  I am turning the {{status}} off
+      - service: tts.google_say
+        entity_id:
+          - media_player.master_bedroom_speaker
+          - media_player.kitchen_speaker   
+          - media_player.gh_home_hub
+          - media_player.garage_speaker
+        data_template:
+          message: >
+            {% set status = 'Heating' if states('climate.hallway') == 'heat' else 'Air Conditioning' if states('climate.hallway') == 'cool' else 'HVAC'  %}
+            You really did it now, dipshit, you left the
+            {% if is_state('binary_sensor.front_door', 'on') %}
+            Front Door
+            {% elif is_state('binary_sensor.garage_house_door', 'on') %} 
+            GARAGE DOOR
+            {% elif is_state('binary_sensor.patio_door', 'on') %} 
+            PATIO DOOR
+            {% elif is_state('binary_sensor.kitchen_window', 'on') %} 
+            KITCHEN WINDOW
+            {% endif %}
+            open, {{status}} isn't free!  I am turning the {{status}} off
+      - service: climate.set_operation_mode
+        data:
+          operation_mode: 'eco'
+          entity_id:
+          - climate.hallway      

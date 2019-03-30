@@ -1,0 +1,58 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/25/2019
+#   @package        :   alarm.yaml
+#   @description    :   Contains the alarm component
+#   @url            :   
+###############################################################################
+
+alarm_control_panel:
+  - platform: manual
+    name: Home Alarm
+    code: 1234
+    pending_time: 30
+    delay_time: 20
+    trigger_time: 4
+    disarmed:
+      trigger_time: 0
+    armed_home:
+      pending_time: 0
+      delay_time: 0
+
+
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+- alias: 'Trigger alarm while armed away'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.front_door
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.patio_door
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.garage_house_door
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.kitchen_window
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.office_window_a
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.office_window_b
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: alarm_control_panel.ha_alarm
+      state: armed_away
+  action:
+    - service: alarm_control_panel.alarm_trigger
+      entity_id: alarm_control_panel.ha_alarm
+    - service: notify.josh_phone
+      data:
+        message: "The {{ trigger.from_state.attributes.friendly_name }} has triggered the alarm"
+        title: "ALARM MESSAGE"

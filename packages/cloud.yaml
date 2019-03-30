@@ -1,0 +1,61 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   02/22/2019
+#   @package        :   
+#   @description    :   Handles everything associated with Nabu-Casa Cloud
+#   @url            :   
+###############################################################################
+
+# Enables Cloud
+cloud:
+  google_actions:
+    filter:
+      include_domains:
+      - light
+      - switch
+      - cover
+      - fan
+      - script
+      exclude_domains:
+      - automations
+      - groups
+      include_entities:
+      - group.christmas_lights
+      exclude_entities:
+      - switch.bedroom_fan_off
+      - switch.bedroom_fan_high
+      - switch.bedroom_fan_med
+      - switch.bedroom_fan_low
+      - switch.bedroom_fan_light
+      - switch.curtain_close
+      - switch.curtain_open
+      - switch.curtain_stop
+      - switch.fluxer
+      - switch.refrigerator_power
+      - switch.roller_shades_close
+      - switch.roller_shades_open
+      - switch.roller_shades_stop
+      - switch.washing_machine_power  
+      - switch.candle_mode_candle_light
+      - switch.candle_dim
+      - switch.candle_2h_4h
+      - switch.candle_6h_8h
+      - switch.candles_raw
+      
+    entity_config:
+      script.bedroom_morning:
+        name: Bedroom Morning Routine
+        aliases:
+          - bedroom morning
+        room: master bedroom    
+      group.christmas_lights:
+        name: Christmas Lights
+        aliases:
+          - Christmas Lights
+          - Holiday Lights
+      switch.heated_blanket:
+        name: Electric Blanket
+        aliases:
+          - Electric Blanket
+          - Heated Blanket
+      

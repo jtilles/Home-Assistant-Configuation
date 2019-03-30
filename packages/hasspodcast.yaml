@@ -1,0 +1,26 @@
+#-------------------------------------------
+#  RSS Podcast Alerting function Packages
+# @CCOSTAN
+# Original Repo : https://github.com/CCOSTAN/Home-AssistantConfig
+#-------------------------------------------
+
+#-------------------------------------------
+feedreader:
+    urls:
+      - https://hasspodcast.io/feed/podcast #HA Podcast Feed
+#-------------------------------------------
+
+automation:
+  - alias: Send notification of RSS feed title when updated
+    trigger:
+      platform: event
+      event_type: feedreader
+
+    action:
+      - service: notify.josh_phone
+        data_template:
+          title: "New RSS Item available"
+          message: "New RSS Item - {{ as_timestamp(now()) | timestamp_custom('%I:%M:%S %p %d%b%Y', true) }} {{trigger.event.data.title}}"
+          data:
+            url: "{{trigger.event.data.link}}"
+  

@@ -1,0 +1,125 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/08/2019
+#   @package        :   josh_phone.yaml
+#   @description    :   Receives webhooks from Pixel3 w/ tasker to updat information
+#   @url            :   
+###############################################################################
+
+input_select:
+  pixel3_wifi_network:
+    name: Pixel3 Wifi
+    options:
+      - Illes Condo- 5GHz
+      - Illes Condo- 2.4GHz
+      - illes_iot
+      - nasabyod
+      - Other
+      - Mobile Network
+      - Unknown
+
+sensor: 
+  - platform: mqtt
+    name: Pixel3 Network
+    state_topic: "josh_phone/ssid"
+    json_attributes_topic: "josh_phone/attributes"
+    
+  - platform: mqtt
+    name: Pixel3 Battery
+    state_topic: "josh_phone/battery"
+    unit_of_measurement: '%'
+    device_class: battery
+    
+device_tracker:
+  - platform: mqtt_json
+    devices:
+      joshua_pixel3_phone: location/josh_phone
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+- alias: Wifi Webhook
+  initial_state: True
+  trigger:
+    platform: webhook
+    webhook_id: wifi
+  action:
+    # - service: notify.josh_phone
+      # data_template:
+        # message: >
+          # {{ trigger.json.ssid }}       
+    # - service: persistent_notification.create
+      # data_template:
+        # title: "PIXEL3 SSID"
+        # message: >    
+          # {{ trigger.json.ssid }}       
+    - service: input_select.select_option
+      data_template:
+        entity_id: input_select.pixel3_wifi_network
+        option: >
+          {% set wifi_networks = [
+          "Illes Condo- 5GHz",
+          "Illes Condo- 2.4GHz",
+          "illes_iot",
+          "nasabyod"
+          ]%}
+          {% if trigger.json.connection == "mobile" %}
+            Mobile Network
+          {% elif trigger.json.connection == "wifi"  %}
+            {% if trigger.json.ssid in wifi_networks %}
+               {{ trigger.json.ssid }}
+            {% else %}
+             Other
+            {% endif %}
+          {% else %}
+            Unknown
+          {% endif %}
+    - service: mqtt.publish
+      data_template:
+        topic: "josh_phone/ssid"
+        retain: true
+        payload_template: >
+          {% if trigger.json.connection == "mobile" %}
+            Mobile Network
+          {% elif trigger.json.connection == "wifi" %}
+            {{ trigger.json.ssid }}
+          {% else %}
+            unknown
+          {% endif %}
+    - service: mqtt.publish
+      data_template:
+        topic: "josh_phone/battery"
+        payload_template: "{{ trigger.json.battery }}"    
+        retain: true        
+    - service: mqtt.publish
+      data_template:
+        topic: "josh_phone/attributes"
+        retain: true
+        payload_template: >
+          {"battery":"{{ trigger.json.battery }}",
+            "connection_type":"{{ trigger.json.connection}}",
+            "rssi":"{{ trigger.json.rssi }}",
+            "mac":"{{ trigger.json.mac }}",
+            "mobile_data":"{{ trigger.json.mobile_data }}",
+            "model":"{{ trigger.json.model }}",
+            "manufacturer":"{{ trigger.json.mfg }}",
+            "location":"{{ trigger.json.location }}",
+            "mobile_network_provider": "{{ trigger.json.tnet }}",
+            "uptime": "{{ trigger.json.uptime }}",
+            "charging": "{{ trigger.json.charging }}",
+            "gps_accuracy": "{{ trigger.json.gps_accuracy }}"
+          }
+    - service: mqtt.publish
+      data_template:
+        topic: "location/josh_phone"
+        retain: true
+        payload_template: >
+          { "battery_level":"{{ trigger.json.battery }}", "longitude":"{{ trigger.json.location.split(',')[1] }}", "latitude":"{{ trigger.json.location.split(',')[0] }}"}        
+            
+            
+            
+            
+            
+            
+            

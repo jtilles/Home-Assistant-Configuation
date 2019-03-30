@@ -87,7 +87,8 @@ light:
     rgb_command_topic: "cmnd/sonoff-RGBCW/Color"
     rgb_command_template: "{{ '%02x%02x%02x' | format(red, green, blue)}}"
     rgb_state_topic: "stat/sonoff-RGBCW/RESULT"
-    rgb_value_template: "{{(value_json.Channel[0]*2.55)|int}},{{(value_json.Channel[1]*2.55)|int}},{{(value_json.Channel[2]*2.55)|int}}"
+    # rgb_value_template: "{{(value_json.Channel[0]*2.55)|int}},{{(value_json.Channel[1]*2.55)|int}},{{(value_json.Channel[2]*2.55)|int}}"
+    rgb_value_template:  "{{value_json.Color.split(',')[0:3]|join(',')}}"
     effect_state_topic: "stat/sonoff-RGBCW/RESULT"
     effect_command_topic: "cmnd/sonoff-RGBCW/Scheme"
     effect_list:

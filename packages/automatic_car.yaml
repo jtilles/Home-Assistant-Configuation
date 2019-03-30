@@ -1,0 +1,29 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   03/09/2019
+#   @package        :   automatic-car.yaml
+#   @description    :   adds in information from my Automatic car tracker
+#   @url            :   
+###############################################################################
+device_tracker:
+  - platform: automatic
+    client_id: !secret automatic_client_id
+    secret: !secret automatic_secret
+    current_location: true
+    
+sensor:
+  - platform: template
+    sensors:
+      sentra_fuel:
+        friendly_name: "Josh's Gas"
+        unit_of_measurement: '%'
+        value_template: "{{ state_attr('device_tracker.2010_nissan_sentra', 'fuel_level') }}"
+
+###############################################################################
+#                               Automations
+###############################################################################
+# automation:
+  # - trigger:
+    # - platform: event
+      # event_type: automatic_update
+      # eve

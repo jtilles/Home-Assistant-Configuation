@@ -1,8 +1,8 @@
 
 # - platform: ddwrt
-  # host: 192.168.0.1
-  # username: 
-  # password: 
+  # host: !secret router_ip_address
+  # username: !secret router_username
+  # password: !secret router_password
   # interval_seconds: 10
   # consider_home: 180
   # new_device_defaults:
@@ -18,18 +18,6 @@
     hide_if_away: False
     
 
-- platform: owntracks
-  max_gps_accuracy: 200
-  # waypoints: True
-  mqtt_topic: "owntracks/#"
-  # events_only: True
-  # waypoint_whitelist:
-    # - jon
-    # - ram
-  # region_mapping:
-    # cabin: home
-    # office: work
-    
 # - platform: nmap_tracker
   # hosts: 192.168.0.0-255
   # consider_home: 120

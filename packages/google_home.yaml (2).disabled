@@ -1,0 +1,15 @@
+###############################################################################
+#   @author         :   J.Illes
+#   @date           :   02/23/2019
+#   @package        :   
+#   @description    :   Package to contain Google home related components
+#   @url            :   
+###############################################################################
+googlehome:
+  devices:
+    - host: 192.168.0.170
+      track_alarms: true
+    - host: 192.168.0.171
+      track_alarms: true
+      
+

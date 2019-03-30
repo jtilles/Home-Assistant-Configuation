@@ -8,7 +8,7 @@ turn_on_bedroom_fan:
     - service: switch.turn_on
       data:
         entity_id: 
-          - switch.bedroom_ceiling_fan_4   
+          - switch.master_bedroom_ceiling_fan
           
     - delay: 
         seconds: 2
@@ -57,7 +57,6 @@ open_bedroom_window_coverings:
         entity_id:
         - cover.bedroom_shades
 
-
 ###############################################################################
 ## Script that is called to turn off fan light based on light in room        
 ###############################################################################
@@ -69,7 +68,7 @@ turn_off_fan_light:
       above: 40
     - service: switch.turn_on
       data:
-        entity_id: switch.bedroom_fan_light
+        entity_id: switch.bedroom_fan_light        
       
 ###############################################################################
 ## Script that is called by automation for prepping bedroom for night        
@@ -156,7 +155,7 @@ bedroom_nighttime:
       data:
         entity_id:
         - switch.air_purifier
-        - switch.bedroom_ceiling_fan_4
+        - switch.master_bedroom_ceiling_fan
         
     # Turn headboard LEDS to Purple 50%
     - service: light.turn_on    
@@ -184,6 +183,10 @@ bedroom_nighttime:
         entity_id: light.cornice
         brightness_pct: 20
         rgb_color: [10,255,10]        
+        
+    - service: light.turn_off
+      data:
+        entity_id: light.candles
     
     # - delay: 
         # seconds: 1  
@@ -252,7 +255,7 @@ bedroom_morning:
         - light.headboard
         - light.underbed_leds
         brightness_pct: 100
-        rgb_color: [255, 255, 255]
+        color_temp: 500
     
     - delay:
         seconds: 10
@@ -270,7 +273,7 @@ bedroom_morning:
       data:
         entity_id: light.cornice
         brightness_pct: 100
-        rgb_color: [255, 255, 255]    
+        color_temp: 153   
         
     - delay:
         seconds: 10
@@ -305,5 +308,7 @@ bedroom_lamp:
           scene.heated_blanket_off
           {% endif %}
           
-  
+
+
+
   
