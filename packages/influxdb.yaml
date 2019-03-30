@@ -7,7 +7,7 @@
 ###############################################################################
 # InfluxDB for storing long trends
 influxdb:
-  host: 192.168.0.150
+  host: !secret influxDB_host
   port: 8086
   include: 
     entities:
